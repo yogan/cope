@@ -1,0 +1,22 @@
+
+cope is a wrapper around programs that output to a terminal, to give
+them colour for utility (and aesthetics).
+
+For example, logfile output becomes much easier to read once errors
+are highlighted in red, or searching through processes could be helped
+if the running user is colour-coded.
+
+You'll need Perl >= 5.10, and a working version of CPAN.
+
+Installation is the standard procedure:
+
+- perl Makefile.PL
+- make
+- make test
+- sudo make install
+
+Then, find out where perl put the scripts:
+
+$ perl -MFile::ShareDir=dist_dir -e "print dist_dir('Cope').\$/"
+
+And add that to your $PATH.

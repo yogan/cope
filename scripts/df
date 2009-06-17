@@ -1,0 +1,42 @@
+#!/usr/bin/env perl
+use App::Cope;
+use v5.10;
+
+my @headers = (
+  'Filesystem', '1K-blocks', 'Used', qr/Avail(?:able)?/, 'Use%', 'Mounted on',
+  'Size', 'Type', # -T
+  'Inodes', 'IUsed', 'IFree', 'IUse%', # -i
+);
+
+my $system_fs = join '|', qw[none tmpfs udev proc devpts sysfs procbususb rpc_pipefs];
+
+sub pct {
+  my ($num) = @_;
+  chop $num;
+  given ($num) {
+    when ( $_ > 75 ) { return 'red bold' }
+    when ( $_ > 50 ) { return 'yellow bold' }
+    when ( $_ > 25 ) { return 'green bold' }
+    default          { return 'bold' };
+  }
+}
+
+sub process {
+  if (/^Filesystem/) {
+    for my $h (@headers) { mark $h => 'underline'; }
+  }
+  else {
+    line qr{(\d+%)\s+(\S+)$} => \&pct, 'bold';
+
+    # filesystems
+    mark qr{^(?:$system_fs)\b} => 'magenta'
+      or line qr{(?:^|:)(\S+/)(\S+)} => 'blue', 'blue bold'
+      or line qr{(\S+:)(\S*)} => 'blue', 'blue bold'
+      or line qr{^(automount\()(\S+)(\))} => 'red', 'magenta', 'red';
+  }
+}
+
+(my $prog, $ENV{PATH}) = new_path;
+run( \&process, $prog, @ARGV );
+
+
