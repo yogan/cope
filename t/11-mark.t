@@ -1,8 +1,9 @@
 #!/usr/bin/env perl
-use Modern::Perl;
+use strict;
+use warnings;
+
 use App::Cope qw[mark colourise];
 use Test::More tests => 2;
-use File::Slurp 'read_file';
 
 my $one = colourise { mark qr{\w+} => qw[red]; } 'bran flakes';
 $one =~ s/\033/\\033/g;

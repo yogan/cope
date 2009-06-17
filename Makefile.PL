@@ -11,6 +11,7 @@ perl_version '5.010';
 requires 'List::MoreUtils';
 requires 'IO::Handle';
 requires 'IO::Pty';
+requires 'IO::Stty';
 requires 'Term::ANSIColor';
 requires 'File::ShareDir';
 
