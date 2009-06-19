@@ -5,8 +5,8 @@ use v5.10;
 my @headers = qw[USER TTY FROM LOGIN@ IDLE JCPU PCPU WHAT];
 
 my $what_pos = 0;
-my $me = (getpwuid( $< ))[0] || "nobody";
 my $using_from = 0;
+my $me = (getpwuid( $< ))[0] || "nobody";
 
 sub process {
   if (/^USER/) {
@@ -17,12 +17,13 @@ sub process {
   else {
     line qr{^(\w+)} => sub { ( shift eq $me ) ? 'yellow bold' : 'yellow' };
 
-    line qr{^\w+\s+(vc)(/\d+)}  => 'blue',    'blue bold';
-    line qr{^\w+\s+(pts)(/\d+)} => 'green',   'green bold';
-    line qr{^\w+\s+(tty)(\d+)}  => 'magenta', 'magenta bold';
+    line qr{^\w+\s+(vc)(/\d+)}   => 'blue',    'blue bold';
+    line qr{^\w+\s+(pts)(/\d+)}  => 'green',   'green bold';
+    line qr{^\w+\s+(tty|p)(\d+)} => 'magenta', 'magenta bold';
+    line qr{^\w+\s+(console)}    => 'red';
 
-    line qr{(?:tty|/)\d+\s+(\S+)} => 'cyan'      if $using_from;
-    line qr{.{$what_pos}(.+)}     => 'cyan bold' if $what_pos != 0;
+    line qr{^\w+\s+\S+\s+(\S+)} => 'cyan'      if $using_from;
+    line qr{.{$what_pos}(.+)}   => 'cyan bold' if $what_pos != 0;
   }
 }
 

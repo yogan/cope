@@ -84,9 +84,10 @@ sub spawn {
 
     # disassociate from the terminal
     POSIX::setsid or carp "Failed setsid: $!";
+    my $tty = $self->{pty}->slave;
+    $tty->clone_winsize_from( \*STDIN );
 
     # set stdin to raw, so keypresses get passed straight through
-    my $tty = $self->{pty}->slave;
     IO::Stty::stty( $tty, 'raw', '-echo' );
 
     # associate with a new terminal
