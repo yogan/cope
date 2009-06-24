@@ -18,9 +18,10 @@ sub process {
     line qr{^(\w+)} => sub { ( shift eq $me ) ? 'yellow bold' : 'yellow' };
 
     line qr{^\w+\s+(vc)(/\d+)}   => 'blue',    'blue bold';
-    line qr{^\w+\s+(pts)(/\d+)}  => 'green',   'green bold';
-    line qr{^\w+\s+(tty|p)(\d+)} => 'magenta', 'magenta bold';
-    line qr{^\w+\s+(console)}    => 'red';
+    line qr{^\w+\s+(console)}    => 'blue',    'blue bold';
+
+    line qr{^\w+\s+(pts)(/\d+)}      => 'green',   'green bold';
+    line qr{^\w+\s+(ttys?|p|s)(\d+)} => 'magenta', 'magenta bold';
 
     line qr{^\w+\s+\S+\s+(\S+)} => 'cyan'      if $using_from;
     line qr{.{$what_pos}(.+)}   => 'cyan bold' if $what_pos != 0;

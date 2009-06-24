@@ -164,9 +164,10 @@ regex. Used by C<mark> and C<line>.
 
   # passing a hashref
   my %protocols = (
-    'tcp' => 'magenta',
-    'udp' => 'red',
-    'raw' => 'red bold',
+    'tcp'   => 'magenta',
+    'udp'   => 'red',
+    'raw'   => 'red bold',
+    '_else' => 'red',
   );
   line qr/^\d+/(\w+)/ => \%protocols;
 
@@ -176,7 +177,7 @@ sub get {
   my ( $colour, $str ) = @_;
   given ( ref $colour ) {
     when ('ARRAY') { return get( shift @{$colour}, $str ) || ''; }
-    when ('HASH')  { return get( $colour->{$str},  $str ) || ''; }
+    when ('HASH')  { return get( $colour->{$str},  $str ) || get( $colour->{_else} ) || ''; }
     when ('CODE')  { return get( &$colour($str),   $str ) || ''; }
     default        { return $colour; };
   }

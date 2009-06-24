@@ -1,0 +1,59 @@
+#!/usr/bin/env perl
+use App::Cope;
+use v5.10;
+
+my @headers = qw[NAME LINE TIME IDLE PID COMMENT EXIT];
+
+my $me = (getpwuid( $< ))[0] || "nobody";
+
+my $date_re = qr!(?: \d{4}-\d{2}-\d{2} # 1970-01-01
+		 |   \w{3}\s\d{2}      # Jan 01
+		 ) \s
+		 \d{2}:\d{2}!x;   # time: 12:34
+
+my $idle_re = qr!\d{2}:\d{2} # standard time
+		 | [.?]	     # or no/unknown time
+		 | old	     # or "old"
+		!x;
+
+sub process {
+  if (/^NAME/) {
+    for my $h (@headers) { mark $h => 'underline'; }
+    $what_pos   = $-[0] if /WHAT/;
+    $using_from = 1     if /FROM/;
+  }
+  else {
+
+    # user name
+    line qr{^(\w+)} => { $me   => 'yellow bold',  # current user
+			 LOGIN => 'magenta bold', # login user
+			 _else => 'yellow',	  # anyone else
+		       };
+
+    line qr{^\w+\s+([-+?])} => { '+' => 'green bold', # write access to other users
+				 '-' => 'red bold',   # no write access
+				 '?' => 'cyan bold',  # unable to determine
+			       };
+
+    # line
+    line qr{\s(vc)(/\d+)\b}       => 'blue',    'blue bold';
+    line qr{\s(pts)(/\d+)\b}      => 'green',   'green bold';
+    line qr{\s(ttys?|p|s)(\d+)\b} => 'magenta', 'magenta bold';
+    line qr{\s(system boot)\b}    => 'red';
+    line qr{\s(run-level \d)\b}   => 'red';
+
+    # time, idle, pid
+    line qr{($date_re)\s*($idle_re)?\s*(\d+)?} => 'blue',
+      sub { /old/   ? 'red bold'  : 'blue bold' },
+      sub { (shift) ? 'cyan bold' : 'cyan' };
+
+    # comment
+    mark qr{\(\S+\)}         => 'blue';
+    mark qr{(?:id|last)=\S+} => 'cyan';
+  }
+}
+
+(my $prog, $ENV{PATH}) = new_path;
+run( \&process, $prog, @ARGV );
+
+
