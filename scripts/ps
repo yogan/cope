@@ -1,0 +1,187 @@
+#!/usr/bin/env perl
+use App::Cope qw[run new_path colourise mark line];
+use v5.10;
+use strict;
+use warnings;
+use Term::ANSIColor;
+
+# The diversity of ps's available output formats is useful, but makes
+# it annoyingly-difficult to parse. Instead of treating each line with
+# a pre-defined set of columns, parse the header line and format it
+# based on that.
+
+# As the header line must be explicitly turned off, rather than on,
+# it's a lot safer for this command rather than any of the other ones.
+
+my $me = (getpwuid( $< ))[0] || "nobody";
+
+# Process state codes ('STAT' column)
+
+my %codes = (
+  'D' => 'blue bold',         # sleeping on IO
+  'R' => 'green bold',	      # running
+  'S' => 'cyan bold',	      # sleeping on event
+  'T' => 'red bold',	      # stopped
+  'W' => 'magenta bold',      # paging
+  'X' => 'white on_red',      # dead
+  'Z' => 'white',             # zombie
+  '<' => 'red',		      # not nice
+  'N' => 'green',	      # nice
+  'L' => 'magenta',	      # locked pages into memory
+  's' => 'cyan',	      # session leader
+  'l' => 'yellow',	      # multi-threaded
+  '+' => 'blue',	      # foreground process
+);
+
+# Process flags
+
+my %flags = (
+  1 => 'yellow',	      # forked but didn't exec
+  4 => 'red',       	      # used super-user privileges
+);
+
+# pending/blocked/ignored/caught signal mask
+
+sub sigmask {
+  line qr{([0-9a-f])} => { 0 => 'black bold' };
+}
+
+# colour anything memory-related in purple
+
+sub memory {
+  mark qr{\S+} => sub {
+    my $mem = shift;
+    ( $mem !~ /^0(\.0)?$/ ) ? 'magenta bold' : 'magenta';
+  };
+}
+
+# and anything cpu-related in blue
+
+sub cpu {
+  mark qr{\S+} => sub {
+    my $mem = shift;
+    ( $mem !~ /^0(\.0)?$/ ) ? 'blue bold' : 'blue';
+  };
+}
+
+sub nice {
+  mark qr{\S+} => sub {
+    given (shift) {
+      when ( $_ > 10  ) { return 'green bold' }
+      when ( $_ > 0   ) { return 'green' }
+      when ( $_ < 0   ) { return 'red' }
+      when ( $_ < -10 ) { return 'red bold' }
+    }
+  };
+}
+
+# The fields themselves
+
+my %fields = (
+  UID => sub {
+    mark qr{\w+} => sub { my $uid = shift; ( $uid eq $me || $uid eq $< ) ? 'yellow bold' : 'yellow' }
+  },
+
+  USER => sub {
+    mark qr{\w+} => sub { ( shift eq $me ) ? 'yellow bold' : 'yellow' }
+  },
+
+  PID  => sub { mark qr{\d+} => sub { (shift) == $$ ? 'cyan' : 'cyan bold' } },
+  PGID => sub { mark qr{\d+} => 'cyan' },
+  PPID => sub { mark qr{\d+} => 'cyan' },
+  SID  => sub { mark qr{\d+} => 'cyan' },
+
+  '%CPU' => \&cpu,
+    C    => \&cpu,
+
+  '%MEM' => \&memory,
+    VSZ  => \&memory,
+    RSS  => \&memory,
+     SZ  => \&memory,
+
+  NI => \&nice,
+
+  TTY => sub {
+    line qr{(vc)(/\d+)\b}       => 'blue', 'blue bold';
+    line qr{(pts)(/\d+)\b}      => 'green', 'green bold';
+    line qr{(ttys?|p|s)(\d+)\b} => 'magenta', 'magenta bold';
+    line qr{(system boot)\b}    => 'red';
+    line qr{(run-level \d)\b}   => 'red';
+  },
+
+  STIME => sub { mark qr{\S+} => 'blue' },
+  START => sub { mark qr{\S+} => 'blue' },
+  TIME  => sub {
+    line qr{(\d+:?)} => sub { ( shift !~ /^0[0:]/ ) ? 'blue bold' : 'blue' };
+  },
+
+  STAT => sub { line qr{(\S)} => \%codes },
+
+  PENDING => \&sigmask,
+  BLOCKED => \&sigmask,
+  IGNORED => \&sigmask,
+  CAUGHT  => \&sigmask,
+
+  S => sub { mark qr{\S} => \%codes },
+
+  F => sub { mark qr{\S} => \%flags },
+
+);
+
+# Used throughout multiple iterations
+my @headers;
+
+sub process {
+
+  # Skip blabber about bad syntax
+  return if /^(?:Warning|ERROR):/;
+
+  # Parse the headings
+  if (/^\s*%?[A-Z]+/) {
+    @headers = ();
+    push @headers, $1 while m/(\S+)/gc;
+    line qr{(\w+%?)} => 'underline';
+  }
+
+  # Use the headings
+  else {
+    my $orig = $_;
+    my $string = "";
+
+    my $i = 0;
+    while ( $orig =~ m/(\s*)(\S+)/gc ) {
+      my ( $spaces, $word ) = ( $1, $2 );
+      my $header = $headers[$i++] || 'CMD';
+
+      # Instead of colourising the line as a whole, split it into bits
+      # and colourise each of them in turn.
+
+      if ( $word eq '-' ) {
+	$string .= $spaces . colored( $word => 'black bold' );
+	next;
+      }
+
+      elsif ( $header eq 'COMMAND' or $header eq 'CMD' or $header eq 'STARTED' ) {
+	my $cmd = substr $orig, $-[2];
+	$cmd =~ s{([^\\\s\|_]\S*)}{colored( $1 => 'bold' )}e; # command names
+	$cmd =~ s{(\||\\_)}{colored( $1 => 'green' )}ge;      # forest branches
+        $string .= $spaces . $cmd;
+
+	# skip the rest of the headers - cmds can go on forever
+        last;
+      }
+
+      else {
+        $string .= $spaces . colourise( $fields{$header} || sub { }, $word );
+      }
+
+    }
+
+    # After all matches have been found, reset $_ to the modified string
+    $_ = $string;
+  }
+
+}
+
+(my $prog, $ENV{PATH}) = new_path;
+run( \&process, $prog, @ARGV );

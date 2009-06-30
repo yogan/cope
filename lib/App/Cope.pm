@@ -78,8 +78,14 @@ sub run {
   # no suffering from buffering
   local $| = 1;
 
+  my $tmp = '';
   while ( my $rout = $pty->read ) {
-    my @bits = split /(\r|\n)/, $rout;
+    my @bits = split /(\r|\n)/, "$tmp$rout";
+    if ( $bits[-1] !~ /\r|\n/ ) {
+      $tmp = pop @bits;
+    } else {
+      $tmp = '';
+    }
     print colourise( $process, $_ ) for @bits;
   }
 
@@ -204,17 +210,21 @@ printed to stdout.
 
 =cut
 
-sub colourise(&$) {
+my $last = '';
+
+sub colourise {
   my $process = shift;
   $_ = shift;
+  return $_ if $_ eq "\n";
 
   %colours = ();
-  &$process if $_ ne "\n";
+  &$process;
 
   for my $i ( sort { $b <=> $a } keys %colours ) {
     substr $_, $i, 0, color( $colours{$i} || 'reset' );
   }
 
+  %colours = ();
   return $_;
 }
 
