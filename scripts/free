@@ -1,0 +1,19 @@
+#!/usr/bin/env perl
+use App::Cope;
+use v5.10;
+
+my @headers = qw[total used free shared buffers cached];
+
+sub process {
+  if (/^\s+total/) {
+    for my $h (@headers) { mark $h => 'underline'; }
+  }
+  else {
+    line qr{^([^\d]+:)} => 'blue bold';
+  }
+}
+
+(my $prog, $ENV{PATH}) = new_path;
+run( \&process, $prog, @ARGV );
+
+
