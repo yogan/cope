@@ -1,0 +1,12 @@
+#!/usr/bin/env perl
+use App::Cope;
+use v5.10;
+
+sub process {
+  line qr{(\d+)\((\w+)\)} => 'yellow', 'yellow bold';
+}
+
+(my $prog, $ENV{PATH}) = new_path;
+run( \&process, $prog, @ARGV );
+
+
