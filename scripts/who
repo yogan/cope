@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
 use App::Cope;
-use v5.10;
 
 my @headers = qw[NAME LINE TIME IDLE PID COMMENT EXIT];
 

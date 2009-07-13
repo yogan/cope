@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
 use App::Cope;
-use v5.10;
 
 (my $prog, $ENV{PATH}) = new_path;
 exec @ARGV;

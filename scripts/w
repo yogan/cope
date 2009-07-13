@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
 use App::Cope;
-use v5.10;
 
 my @headers = qw[USER TTY FROM LOGIN@ IDLE JCPU PCPU WHAT];
 

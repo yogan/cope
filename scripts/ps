@@ -1,8 +1,5 @@
 #!/usr/bin/env perl
 use App::Cope qw[run new_path colourise mark line];
-use v5.10;
-use strict;
-use warnings;
 use Term::ANSIColor;
 
 # The diversity of ps's available output formats is useful, but makes

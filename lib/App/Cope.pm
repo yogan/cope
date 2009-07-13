@@ -5,10 +5,6 @@ use warnings;
 use 5.010_000;
 use Carp;
 
-use base 'Exporter';
-our @EXPORT = qw[run mark line new_path];
-our @EXPORT_OK = qw[get colourise];
-
 our $VERSION = '0.99';
 
 =head1 NAME
@@ -29,6 +25,21 @@ use IO::Handle;
 use Term::ANSIColor;
 use List::MoreUtils 'each_array';
 use File::Spec;
+
+use base 'Exporter';
+our @EXPORT = qw[run mark line new_path];
+our @EXPORT_OK = qw[get colourise];
+
+sub import {
+  # Automatically use strictures and warnings and Perl 5.10 features,
+  # so those three lines don't have to be typed for every script
+  strict->import;
+  warnings->import;
+  feature->import( ':5.10' );
+
+  # Let Exporter do the rest
+  App::Cope->export_to_level( 1, @_ );
+}
 
 =head1 DESCRIPTION
 
@@ -51,11 +62,16 @@ string, as the control codes would get in the way.
 
 =head1 MAIN FUNCTIONS
 
-=head2 run( \&process )
+=head2 run( \&process, @args )
+
+The main body of the program, when being run by scripts. It takes a
+sub that modifies each line of input, and a list of arguments to pass
+to exec to run the program. The first of the args, the program name,
+should be absolute.
 
 =cut
 
-our %colours;
+our %colours;   # the variable to modify
 
 sub run {
   my ( $process, @args ) = @_;
@@ -220,11 +236,17 @@ sub colourise {
   %colours = ();
   &$process;
 
+  # Any colour that's /on_/ or /bold/ needs to be reset afterwards, so
+  # the colours/boldness return to normal values.
+
+  my $first = 1;
   for my $i ( sort { $b <=> $a } keys %colours ) {
-    substr $_, $i, 0, color( $colours{$i} || 'reset' );
+    my $reset = ( $first and $colours{$i} =~ m/on_|bold/ ) ? color 'reset' : '';
+    substr $_, $i, 0, $reset . color( $colours{$i} || 'reset' ); # update!
+    $first = 0;
   }
 
-  %colours = ();
+  %colours = ();  # just making sure
   return $_;
 }
 

@@ -5,4 +5,4 @@ BEGIN {
 	use_ok( 'App::Cope' );
 }
 
-diag( "Testing App::Cope $Cope::VERSION, Perl $], $^X" );
+diag( "Testing App::Cope $App::Cope::VERSION, Perl $], $^X" );
