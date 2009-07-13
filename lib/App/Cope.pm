@@ -236,14 +236,24 @@ sub colourise {
   %colours = ();
   &$process;
 
+  my @parts = sort { $b <=> $a } keys %colours;
+
   # Any colour that's /on_/ or /bold/ needs to be reset afterwards, so
   # the colours/boldness return to normal values.
 
-  my $first = 1;
-  for my $i ( sort { $b <=> $a } keys %colours ) {
-    my $reset = ( $first and $colours{$i} =~ m/on_|bold/ ) ? color 'reset' : '';
-    substr $_, $i, 0, $reset . color( $colours{$i} || 'reset' ); # update!
-    $first = 0;
+  for my $i ( 0 .. $#parts ) {
+    my ( $last, $part ) = @colours{ @parts[ $i - 1, $i ] };
+    if ( $i and ($part =~ m/bold/ and $last !~ m/bold/)
+             or ($part =~ m/on_/  and $last !~ m/_on/ ) ) {
+      $colours{ $parts[ $i - 1 ] } = "clear $last";
+    }
+  }
+
+  # Actually apply the changes and update the string (backwards, as to
+  # not overwrite previous changes)
+
+  for my $i ( @parts ) {
+    substr $_, $i, 0, color( $colours{$i} || 'reset' );
   }
 
   %colours = ();  # just making sure
