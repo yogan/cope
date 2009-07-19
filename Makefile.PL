@@ -14,6 +14,7 @@ requires 'IO::Pty';
 requires 'IO::Stty';
 requires 'Term::ANSIColor';
 requires 'File::ShareDir';
+requires 'Env::Path';
 
 # testing
 test_requires 'Test::More';

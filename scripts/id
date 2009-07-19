@@ -5,7 +5,4 @@ sub process {
   line qr{(\d+)\((\w+)\)} => 'yellow', 'yellow bold';
 }
 
-(my $prog, $ENV{PATH}) = new_path;
-run( \&process, $prog, @ARGV );
-
-
+run( \&process, real_path, @ARGV );

@@ -23,11 +23,12 @@ use App::Cope::Pty;
 
 use IO::Handle;
 use Term::ANSIColor;
-use List::MoreUtils 'each_array';
-use File::Spec;
+use List::MoreUtils qw[each_array firstval];
+use Env::Path qw[:all];
+use File::Spec qw[splitpath];
 
-use base 'Exporter';
-our @EXPORT = qw[run mark line new_path];
+use base q[Exporter];
+our @EXPORT = qw[run mark line real_path];
 our @EXPORT_OK = qw[get colourise];
 
 sub import {
@@ -77,30 +78,33 @@ sub run {
   my ( $process, @args ) = @_;
   croak "No arguments" unless @args;
 
-  # don't run if told not to
+  # Don't run if told not to
   if ($ENV{NOCOPE} or not POSIX::isatty STDOUT) {
     exec @args;
   }
 
-  # handle
+  # Initialise handle
   my $fh = new IO::Handle or croak "Failed handle: $!";
   $fh->fdopen( fileno STDIN, 'r' );
   $fh->autoflush;
 
-  # pty
+  # Initialise pseudo-terminal
   my $pty = App::Cope::Pty->new;
   $pty->spawn( @args );
 
-  # no suffering from buffering
+  # No suffering from buffering
   local $| = 1;
 
-  my $tmp = '';
+  # Input is received one chunk at a time, rather than one line at a
+  # time. If the last line received isn't complete (no newline at
+  # end), wait for more to be received before processing it.
+  my $buf = '';
   while ( my $rout = $pty->read ) {
-    my @bits = split /(\r|\n)/, "$tmp$rout";
+    my @bits = split /(\r|\n)/, "$buf$rout";
     if ( $bits[-1] !~ /\r|\n/ ) {
-      $tmp = pop @bits;
+      $buf = pop @bits;
     } else {
-      $tmp = '';
+      $buf = '';
     }
     print colourise( $process, $_ ) for @bits;
   }
@@ -260,21 +264,16 @@ sub colourise {
   return $_;
 }
 
-=head2 new_path
+=head2 real_path
 
-Returns a new value for $ENV{PATH}, with the scripts directory
-omitted, and the name of the executable to run in the new path.
+Returns the path to the original program that should be run - that is,
+the one not in the scripts directory.
 
 =cut
 
-sub new_path {
-  my ( $vol, $dirs, $file ) = File::Spec->splitpath( $0 );
-  $dirs =~ s{/$}{};
-
-  my $path = $ENV{PATH};
-  $path =~ s{^$dirs:}{};
-
-  return ( $file, $path );
+sub real_path {
+  my ( $vol, $dirs, $file ) = File::Spec->splitpath($0);
+  return firstval { $_ ne $0 } PATH->Whence($file);
 }
 
 1;

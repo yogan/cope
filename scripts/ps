@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-use App::Cope qw[run new_path colourise mark line];
+use App::Cope qw[run real_path colourise mark line];
 use Term::ANSIColor;
 
 # The diversity of ps's available output formats is useful, but makes
@@ -180,5 +180,4 @@ sub process {
 
 }
 
-(my $prog, $ENV{PATH}) = new_path;
-run( \&process, $prog, @ARGV );
+run( \&process, real_path, @ARGV );

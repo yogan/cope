@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
-use App::Cope;
+use File::Spec 'splitpath';
 
-(my $prog, $ENV{PATH}) = new_path;
+my ( $vol, $dirs, $file ) = File::Spec->splitpath($0);
+$dirs =~ s{/$}{};
+$ENV{PATH} =~ s{^$dirs:}{};
 exec @ARGV;
-
-
