@@ -136,7 +136,7 @@ sub process {
   # Parse the headings
   if (/^\s*%?[A-Z]+/) {
     @headers = ();
-    push @headers, $1 while m/(\S+)/gc;
+    push @headers, $1 while m/(\S+)/g;
     line qr{(\w+%?)} => 'underline';
   }
 

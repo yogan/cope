@@ -144,7 +144,7 @@ sub line {
   my $regexp = shift;
 
   my $offset = 0;
-  while ( substr( $_, $offset ) =~ $regexp ) {
+  while ( m/$regexp/g ) {
 
     # skip 0th entries - they just contain info about the entire match
     my @starts   = @-[ 1 .. $#- ];
@@ -157,12 +157,9 @@ sub line {
       # either $start or $end being undef means that there was nothing to
       # match, e.g. /(?: (\S+) )?/x where the match fails.
       if ( defined $start and defined $end ) {
-	my $ss = $offset + $start;
-	my $ee = $offset + $end;
-
-        my $before = substr $_, $ss, $end - $start;
+        my $before = substr $_, $start, $end - $start;
 	my $c = get( $colour, $before );
-	colour( $ss, $ee => $c );
+	colour( $start, $end => $c );
       }
     }
 

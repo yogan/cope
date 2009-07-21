@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-use Test::More tests => 13;
+use Test::More tests => 14;
 use App::Cope qw[mark line colourise];
 
 sub test($&$$) {
@@ -36,6 +36,12 @@ test 'line with two groups' => sub {
 },
   '|_ HTML Title: Document Moved',
   '\\E[35;1m|_\\E[0m \\E[35mHTML Title: Document Moved\\E[0m';
+
+test '^ only applied once' => sub {
+  line qr{^(.)} => 'red';
+},
+  'hello',
+  '\E[31mh\E[0mello';
 
 sub configure_process {
   line qr{^checking .+\.{3} (.+)} => sub {
