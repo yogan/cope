@@ -6,17 +6,6 @@ use warnings;
 
 App::Cope::Pty - Pseudo-tty functions for F<cope>.
 
-=head1 SYNOPSIS
-
-  # See F<cope.pm> for Cope::Pty in action
-
-  my $pty = new Cope::Pty;
-  $pty->spawn( qw[netstat -atu] );
-
-  select( my $rout = $pty->bits, (undef) x 3 );
-
-  my $input = $pty->read;
-
 =head1 DESCRIPTION
 
 B<Note:> This is part of F<cope>, and doesn't make much of an effort
@@ -38,7 +27,7 @@ use IO::Pty;
 =head2 new()
 
 The constructor initialises and returns the pty, and croaks if it
-fails. It also sets the bits for C<select>.
+fails.
 
 C<spawn> should be called sometime after this, to run a program.
 
@@ -48,8 +37,6 @@ sub new {
   my $class = shift;
   my $self;
   $self->{pty} = new IO::Pty or croak "Failed pty: $!";
-  $self->{pid} = undef;
-  vec( $self->{bits} = '', fileno $self->{pty}, 1 ) = 1;
   bless $self, $class;
   return $self;
 }
@@ -58,8 +45,7 @@ sub new {
 
 Forks a new process with C<exec>, with C<stdin>, C<stderr> and
 C<stdout> reopened to the pty. Croaks or carps if anything goes wrong
-(Failed piping or reopening). It also sets the C<pid> field to the pid
-of the new process.
+(Failed piping or reopening).
 
 Leaves the child in the C<exec> call and returns nothing important.
 

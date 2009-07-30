@@ -92,12 +92,22 @@ sub run {
   my $pty = App::Cope::Pty->new;
   $pty->spawn( @args );
 
+  # let any signals be automatically passed to the child process
+  my $dying_early = 0;
+  for my $sig ( qw[INT QUIT] ) {
+    $SIG{$sig} = sub {
+      $dying_early++;
+      kill "SIG$sig", $pty->{pid};
+    };
+  }
+
   # No suffering from buffering
   local $| = 1;
 
   # Input is received one chunk at a time, rather than one line at a
   # time. If the last line received isn't complete (no newline at
   # end), wait for more to be received before processing it.
+ receive:
   my $buf = '';
   while ( my $rout = $pty->read ) {
     my @bits = split /(\r|\n)/, "$buf$rout";
@@ -109,11 +119,18 @@ sub run {
     print colourise( $process, $_ ) for @bits;
   }
 
+  if ($dying_early) {
+    # The call to $pty->read was terminated by a signal! Try to read
+    # any more output, in case there's any left to read.
+    $dying_early = 0;
+    goto receive;
+  }
+
   $fh->close  or carp "Failed close: $!";
   $pty->close or carp "Failed close: $!";
 }
 
-=head2 mark( $regexp, $colour )
+=head2 mark( $regex, $colour )
 
 The simpler of the highlighting functions; C<mark> takes a regex, and
 one colour, and highlights the first part of the string matched in the
@@ -125,12 +142,12 @@ given colour.
 
 sub mark {
   my ( $regex, $colour ) = @_;
-  if (m/$regex/) {
-    colour( $-[0], $+[0] => get( $colour, $& ) );
+  if (m/$regex/p) {
+    colour( $-[0], $+[0] => get( $colour, ${^MATCH} ) );
   }
 }
 
-=head2 line( $regexp, @colours )
+=head2 line( $regex, @colours )
 
 The more complicated function; C<line> takes a regex, containing
 parenthesised captures, and highlights each match with the relevant
@@ -141,10 +158,10 @@ colour in the array.
 =cut
 
 sub line {
-  my $regexp = shift;
+  my $regex = shift;
 
   my $offset = 0;
-  while ( m/$regexp/g ) {
+  while ( m/$regex/g ) {
 
     # skip 0th entries - they just contain info about the entire match
     my @starts   = @-[ 1 .. $#- ];
