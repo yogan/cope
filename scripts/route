@@ -1,0 +1,51 @@
+#!/usr/bin/env perl
+use App::Cope;
+
+my @headers = qw[Destination Source Gateway Genmask Flags Metric Ref
+		 Use Iface MSS Window irtt HH Arp];
+
+my %destinations = (
+  'default' => 'cyan bold',
+  '0.0.0.0' => 'blue',
+  _else     => 'blue bold',
+);
+
+my %gateways = (
+  '*'       => 'red',
+  '0.0.0.0' => 'yellow',
+  _else     => 'yellow bold',
+);
+
+my %genmasks = (
+  '255.255.255.255' => 'cyan',
+  '0.0.0.0'         => 'cyan bold',
+  _else             => 'green bold',
+);
+
+my $broken = 0;
+
+sub process {
+
+  # ignore if something went wrong
+  return if $broken;
+  return if m{^SIOC};
+
+  # highlight headers
+  if ( m{^(?:Destination|Source)} ) {
+    for my $h (@headers) { mark $h => 'underline'; }
+  }
+
+  # determine when things go wrong
+  elsif ( m{^/sbin/route} or m{^Usage:} ) {
+    $broken = 1;
+  }
+
+  # if not, just highlight the first three columns normally.
+  else {
+    return if /Kernel IP routing (?:table|cache)/;
+    line qr{^(\S+)\s+(\S+)\s+(\S+)\s+} =>
+      \%destinations, \%gateways, \%genmasks;
+  }
+}
+
+run( \&process, real_path, @ARGV );
