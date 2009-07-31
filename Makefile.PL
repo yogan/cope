@@ -8,13 +8,14 @@ all_from 'lib/App/Cope.pm';
 perl_version '5.010';
 
 # requirements
-requires 'List::MoreUtils';
+requires 'Env::Path';
+requires 'File::ShareDir';
 requires 'IO::Handle';
 requires 'IO::Pty';
 requires 'IO::Stty';
+requires 'List::MoreUtils';
+requires 'Regexp::Common';
 requires 'Term::ANSIColor';
-requires 'File::ShareDir';
-requires 'Env::Path';
 
 # testing
 test_requires 'Test::More';
