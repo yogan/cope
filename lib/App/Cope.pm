@@ -144,7 +144,9 @@ sub mark {
   my ( $regex, $colour ) = @_;
   if (m/$regex/p) {
     colour( $-[0], $+[0] => get( $colour, ${^MATCH} ) );
+    return 1;
   }
+  return 0;
 }
 
 =head2 line( $regex, @colours )
