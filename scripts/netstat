@@ -1,0 +1,113 @@
+#!/usr/bin/env perl
+use App::Cope;
+
+my @headers = ( 'Proto', 'Recv-Q', 'Send-Q', 'Local Address', 'Foreign Address', 'State',
+		'PID/Program name', 'User', 'Inode', 'Timer' );
+
+# Distinguish socket states by colour
+
+my %states = (
+  SYN_SENT    => 'yellow',        # establishing...
+  SYN_RECV    => 'yellow',
+  ESTABLISHED => 'green bold',    # established!
+  LISTEN      => 'cyan bold',
+  CLOSING     => 'red bold',      # closing...
+  CLOSED      => 'red bold',      # closed.
+  FIN_WAIT1   => 'red',
+  FIN_WAIT2   => 'red',
+  CLOSE_WAIT  => 'red',
+  TIME_WAIT   => 'yellow',
+  LAST_ACK    => 'red bold',
+);
+
+# The state of networking timers
+
+my %timers = (
+  on        => 'green bold',
+  off       => 'red bold',
+  timewait  => 'yellow bold',
+  keepalive => 'magenta bold'
+);
+
+# A network address, plus a colon, minus its port.
+
+my $address_regex = qr{
+			\*: |	# a single star, or
+			::: |	# two colons, or
+			\S+?:	# an address
+		    }x;
+
+my $me = (getpwuid( $< ))[0] || "nobody";
+
+sub user {
+  if ( shift eq $me ) {
+    return 'yellow bold';
+  } else {
+    return 'yellow';
+  }
+}
+
+sub bytes {
+  return (shift) ? 'green bold' : 'green';
+}
+
+# netstat provides a tricky column-based layout. It's best to
+# highlight each column in turn, based on how many characters come
+# before its entry in the header line.
+
+my %header_offsets;		# list of offsets in the header
+
+# Like line, but matching a specific header.
+
+sub column {
+  my ( $name, $regex, @colours ) = @_;
+  line qr{^} . ( qr{.} x $header_offsets{$name} ) . $regex => @colours
+    if $header_offsets{$name};
+}
+
+sub process {
+
+  # do the headers
+  if (/^Proto/) {
+    for my $h (@headers) {
+      if (mark $h => 'underline') {
+	/$h/;
+	$header_offsets{$h} = $-[0];
+      }
+    }
+  }
+
+  # highlight!
+  else {
+
+    # protocol and send/receive statistics
+    line qr{
+	     (tcp|udp|raw) \s+	# Proto
+	     (\d+) \s+		# Recv-Q
+	     (\d+)		# Send-Q
+	 }x => { tcp => 'magenta bold', udp => 'red bold', raw => 'red' }, \&bytes, \&bytes;
+
+    # miscellaneous information
+    column 'State', qr{(\w+)} => \%states;
+    column 'PID/Program name', qr{(\d+/)(\S+)} => qw[cyan blue];
+    column 'Inode', qr{(\d+)} => \&bytes;
+    column 'User', qr{(\w+)} => \&user;
+
+    # addresses
+    column 'Local Address', qr{($address_regex)([^:]+)\s} => 'yellow', 'yellow bold';
+    column 'Foreign Address', qr{($address_regex)([^:]+)\s} => 'blue', 'blue bold';
+
+    # timers
+    line qr{
+	     (on|off|timewait|keepalive) \s \( # timer state
+	     [0-9.]+ /	     # one
+	     [0-9.]+ /	     # two
+	     [0-9.]+ \)	     # three
+	 }x => \%timers;
+
+    # ignore boring lines
+    line qr{\s(-)\s} => 'black bold';
+  }
+}
+
+run( \&process, real_path, @ARGV );
