@@ -1,16 +1,7 @@
 #!/usr/bin/env perl
 use App::Cope;
+use App::Cope::Extra qw[ping_time];
 use Regexp::Common qw[net];
-
-sub ping_time {
-  my ($ms) = @_;
-  $ms =~ s/ ms$//g;
-  given ($ms) {
-    when ( $_ >= 200 ) { return 'red bold' }
-    when ( $_ >= 100 ) { return 'yellow bold' }
-    default            { return 'green bold' }
-  }
-}
 
 sub process {
   line qr{(\S+)\s(\($RE{net}{IPv4}\))} => 'blue bold', 'blue';

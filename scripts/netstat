@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 use App::Cope;
+use App::Cope::Extra qw[user nonzero];
 
 my @headers = ( 'Proto', 'Recv-Q', 'Send-Q', 'Local Address', 'Foreign Address', 'State',
 		'PID/Program name', 'User', 'Inode', 'Timer' );
@@ -37,20 +38,6 @@ my $address_regex = qr{
 			\S+?:	# an address
 		    }x;
 
-my $me = (getpwuid( $< ))[0] || "nobody";
-
-sub user {
-  if ( shift eq $me ) {
-    return 'yellow bold';
-  } else {
-    return 'yellow';
-  }
-}
-
-sub bytes {
-  return (shift) ? 'green bold' : 'green';
-}
-
 # netstat provides a tricky column-based layout. It's best to
 # highlight each column in turn, based on how many characters come
 # before its entry in the header line.
@@ -85,13 +72,13 @@ sub process {
 	     (tcp|udp|raw) \s+	# Proto
 	     (\d+) \s+		# Recv-Q
 	     (\d+)		# Send-Q
-	 }x => { tcp => 'magenta bold', udp => 'red bold', raw => 'red' }, \&bytes, \&bytes;
+	 }x => { tcp => 'magenta bold', udp => 'red bold', raw => 'red' }, ( \&{ nonzero 'green' } ) x 2;
 
     # miscellaneous information
     column 'State', qr{(\w+)} => \%states;
     column 'PID/Program name', qr{(\d+/)(\S+)} => qw[cyan blue];
-    column 'Inode', qr{(\d+)} => \&bytes;
-    column 'User', qr{(\w+)} => \&user;
+    column 'Inode', qr{(\d+)} => \&{ nonzero 'green' };
+    column 'User', qr{(\w+)} => \&{ user 'yellow' };
 
     # addresses
     column 'Local Address', qr{($address_regex)([^:]+)\s} => 'yellow', 'yellow bold';

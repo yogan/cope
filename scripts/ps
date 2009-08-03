@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 use App::Cope qw[run real_path colourise mark line];
+use App::Cope::Extra qw[user nonzero];
 use Term::ANSIColor;
 
 # The diversity of ps's available output formats is useful, but makes
@@ -46,19 +47,13 @@ sub sigmask {
 # colour anything memory-related in purple
 
 sub memory {
-  mark qr{\S+} => sub {
-    my $mem = shift;
-    ( $mem !~ /^0(\.0)?$/ ) ? 'magenta bold' : 'magenta';
-  };
+  mark qr{\S+} => \&{ nonzero 'magenta' };
 }
 
 # and anything cpu-related in blue
 
 sub cpu {
-  mark qr{\S+} => sub {
-    my $mem = shift;
-    ( $mem !~ /^0(\.0)?$/ ) ? 'blue bold' : 'blue';
-  };
+  mark qr{\S+} => \&{ nonzero 'blue' };
 }
 
 sub nice {
@@ -80,7 +75,7 @@ my %fields = (
   },
 
   USER => sub {
-    mark qr{\w+} => sub { ( shift eq $me ) ? 'yellow bold' : 'yellow' }
+    mark qr{\w+} => \&{ user 'yellow' };
   },
 
   PID  => sub { mark qr{\d+} => sub { (shift) == $$ ? 'cyan' : 'cyan bold' } },

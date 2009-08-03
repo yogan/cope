@@ -1,11 +1,11 @@
 #!/usr/bin/env perl
 use App::Cope;
+use App::Cope::Extra qw[user];
 
 my @headers = qw[USER TTY FROM LOGIN@ IDLE JCPU PCPU WHAT];
 
 my $what_pos = 0;
 my $using_from = 0;
-my $me = (getpwuid( $< ))[0] || "nobody";
 
 sub process {
   if (/^USER/) {
@@ -14,7 +14,7 @@ sub process {
     $using_from = 1     if /FROM/;
   }
   else {
-    line qr{^(\w+)} => sub { ( shift eq $me ) ? 'yellow bold' : 'yellow' };
+    line qr{^(\w+)} => \&{ user 'yellow' };
 
     line qr{^\w+\s+(vc)(/\d+)}   => 'blue',    'blue bold';
     line qr{^\w+\s+(console)}    => 'blue',    'blue bold';
