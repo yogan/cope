@@ -9,13 +9,13 @@ our $VERSION = '0.99';
 
 =head1 NAME
 
-App::Cope - Functions for the cope program
+App::Cope - Functions for the B<cope> program
 
 =head1 SYNOPSIS
 
-This file contains functions for F<cope>, and documentation of what
-they do. If you want to learn how to use cope itself, see
-App::Cope::Manual instead.
+B<Note:> This file contains functions for L<cope>, and documentation
+on its internals. If you want to learn how to use or install cope
+itself, see L<App::Cope::Manual> instead.
 
 =cut
 
@@ -42,17 +42,18 @@ sub import {
   App::Cope->export_to_level( 1, @_ );
 }
 
-=head1 DESCRIPTION
+=head1 HIGHLIGHTING
 
 Rather embarrassingly, the technique for highlighting parts of a
 string is used by modifying global variables. The process works
 something like this:
 
-1) Cope gets a string from a program's output.
+1) cope gets a string from a program's output.
 
-2) The line and mark functions match against the string, now in C<$_>,
-   and modify the hash C<%colours> at the start and end positions of
-   the match with ANSI control codes to turn the colours on and off.
+2) The L</"line"> and L</"mark"> functions match against the string,
+   now in C<$_>, and modify the hash C<%colours> at the start and end
+   positions of the match with ANSI control codes to turn the colours
+   on and off.
 
 3) The string is colourised, and the control-code-laden string is
    printed as output.
@@ -228,7 +229,7 @@ sub get {
 =head2 colour( $begin, $end, $colour )
 
 B<Modifies> the hash C<%colours>, in order to highlight the region
-from $begin to $end in $colour.
+from C<$begin> to C<$end> in $colour.
 
 =cut
 

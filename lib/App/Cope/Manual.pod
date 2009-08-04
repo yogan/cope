@@ -4,7 +4,7 @@ App::Cope::Manual - User guide for cope
 
 =head1 DESCRIPTION
 
-L<cope> is a wrapper around programs that output to a terminal, to
+B<cope> is a wrapper around programs that output to a terminal, to
 give them colour for utility (and aesthetics).
 
 For example, logfile output becomes much easier to read once errors
@@ -13,15 +13,20 @@ if the running user is colour-coded.
 
 =head1 INSTALL
 
-Standard 4-command Perl install procedure:
+cope is not currently on the CPAN, so installation is the standard
+4-command Perl install procedure:
 
 - perl Makefile.PL
+
 - make
+
 - make test
+
 - make install
 
-Once you've installed cope, just add the directory to your $PATH:
+Once you've installed cope, just add the directory to your C<$PATH>:
 
+  OLDPATH=$PATH''
   export PATH="/path/to/scripts/:$PATH"
 
 And the programs in the scripts directory will automatically colourise
@@ -45,25 +50,27 @@ Although cope uses a pseudo-terminal to read its input, it doesn't
 pretend to act like one. Applications that require a terminal to be
 emulated - think editors, pagers, roguelikes - will fail miserably. If
 you want to interact with one of them, write your own script using
-C<Term::VT102> to parse the output.
+L<Term::VT102> to parse the output.
 
 =head1 TURNING FILTERING ON/OFF
 
-To avoid clashes with other pipes, does not filter if its output isn't going
-to a terminal.
+To avoid clashes with other pipes, cope does not filter if its output
+isn't going to a terminal.
 
-The script F<nocope> runs a program without filtering it through cope.
+The script L<nocope> runs a program without filtering it through cope,
+by removing the scripts directory from the C<PATH>.
 
-Also, the environment variable NOCOPE is handled by all the scripts as
-to run the program without the filter.
+Also, the environment variable C<$NOCOPE> is handled by all the scripts
+as to run the program without the filter.
 
 =head1 SUPPORT
 
-There is no "stable" version; due to the number of programs that cope
-has to support, any development version from the master branch is
-bound to be working more or less correctly.
+There is no "stable" version. cope is a relatively small program, and
+the majority of changes are going to be for different scripts, rather
+than changes to the main code, which is bound to be working more or
+less correctly.
 
-Support and information about F<cope> can be found at:
+Support and information about cope can be found at:
 
 =over 4
 
@@ -77,13 +84,13 @@ L<http://github.com/cytzol/cope/>
 
 =back
 
-Please report anything wrong at all: either a bug within Cope, or if
-something gets highlighted incorrectly or fails to be highlighted at
-all.
+Please report anything wrong at all: either a bug within cope, or if
+something gets highlighted incorrectly, or even fails to be
+highlighted at all.
 
 =head1 AUTHOR
 
-Benjamin Sago aka `cytzol' C<< <ben@cytzol.com> >>
+Benjamin Sago aka `cytzol' C<< <ben&cytzol,org> >>
 
 =head1 COPYRIGHT & LICENCE
 

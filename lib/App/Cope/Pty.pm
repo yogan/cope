@@ -4,18 +4,17 @@ use warnings;
 
 =head1 NAME
 
-App::Cope::Pty - Pseudo-tty functions for F<cope>.
+App::Cope::Pty - Pseudo-tty functions for B<cope>.
 
 =head1 DESCRIPTION
 
-B<Note:> This is part of F<cope>, and doesn't make much of an effort
+B<Note:> This is part of L<cope>, and doesn't make much of an effort
 to fit in anywhere else. If you want a nice pty library, use
-F<IO::Pty> or F<IO::Pty::Easy>.
+L<IO::Pty> or L<IO::Pty::Easy>.
 
-F<cope> uses a pseudo-tty for reading in from a process. This is
-favoured above pipes, because ptys allow for non-buffered input,
-instead of waiting for the program to complete before getting any
-output from it.
+cope uses a pseudo-tty for reading in from a process. This is favoured
+above pipes, because ptys allow for non-buffered input, instead of
+waiting for the program to complete before getting any output from it.
 
 =cut
 
