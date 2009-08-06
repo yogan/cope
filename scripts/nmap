@@ -1,0 +1,41 @@
+#!/usr/bin/env perl
+use App::Cope;
+use Regexp::Common qw[net];
+
+my @headers = qw[PORT STATE SERVICE REASON VERSION];
+
+my %protocols = (
+  '/tcp' => 'blue',
+  '/udp' => 'magenta'
+);
+
+my %states = (
+  open     => 'green bold',
+  filtered => 'yellow bold',
+  closed   => 'red bold'
+);
+
+sub process {
+  if ( m/^PORT/ ) {
+    for my $h (@headers) {
+      mark $h => 'underline';
+    }
+  }
+  else {
+
+    # header
+    line qr{^Interesting ports on (\S+)(?:\s(\($RE{net}{IPv4}\)))?:} => 'blue bold underline', 'blue';
+    mark qr{^Host script results:} => 'underline';
+
+    # ui
+    line qr{^(\|_?)} => 'black bold';
+    line qr{\s(\|_)\s} => 'black bold';
+
+    # results
+    line qr{^(\d+)(/(?:tcp|udp))\s+(\w+)\s+(\S+)} => 'blue bold', \%protocols, \%states, 'yellow';
+    line qr{^Failed to resolve given hostname/IP: (\S+)\.\s} => 'red bold';
+
+  }
+}
+
+run( \&process, real_path, @ARGV );
