@@ -93,12 +93,13 @@ sub run {
   my $pty = App::Cope::Pty->new;
   $pty->spawn( @args );
 
-  # let any signals be automatically passed to the child process
+  # Let any signals be automatically passed to the child process
+  my %signals = ( INT => 2, QUIT => 3, TERM => 15 );
   my $dying_early = 0;
-  for my $sig ( qw[INT QUIT] ) {
+  while ( my ( $sig, $num ) = each %signals ) {
     $SIG{$sig} = sub {
       $dying_early++;
-      kill "SIG$sig", $pty->{pid};
+      kill -$num => $pty->{pid}; # kill the entire process group
     };
   }
 
