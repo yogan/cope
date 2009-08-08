@@ -265,6 +265,9 @@ sub colourise {
 
   for my $i ( 0 .. $#parts ) {
     my ( $last, $part ) = @colours{ @parts[ $i - 1, $i ] };
+    carp "Uninitialised value in colourise (try adding more arguments)"
+      and next unless defined $part;
+
     if ( $i and ($part =~ m/bold/ and $last !~ m/bold/)
              or ($part =~ m/on_/  and $last !~ m/_on/ ) ) {
       $colours{ $parts[ $i - 1 ] } = "clear $last";
