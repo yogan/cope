@@ -1,0 +1,44 @@
+#!/usr/bin/env perl
+use App::Cope;
+
+my @headers = (
+  '%Time',    'ExclSec', 'CumulS', '#Calls',
+  'sec/call', 'Csec/c',  'Name',
+);
+
+sub pct {
+  my ($num) = @_;
+  chop $num;
+  given ($num) {
+    when ( $_ > 30 ) { return 'red bold' }
+    when ( $_ > 20 ) { return 'yellow bold' }
+    when ( $_ > 10 ) { return 'green bold' }
+    default          { return 'bold' };
+  }
+}
+
+sub process {
+  if (/^%Time/) {
+    for my $h (@headers) { mark $h => 'underline'; }
+  }
+  elsif (/Time =/) {
+    line qr{Time = (.+)} => 'bold';
+  }
+  else {
+
+    my $time = line qr{^\s*
+		       (  [0-9.]+) \s+ # %Time
+		       (-?[0-9.]*) \s+ # ExclSec
+		       (-?[0-9.]+)     # CumulS
+		    }x => \&pct, '', 'bold';
+
+    if ($time or m/^\s{5,}/) {
+      line qr{((?:\S+?::)*)(\S+)$} => 'blue', 'blue bold'; # name
+    }
+
+    line qr{\s(-)\s} => 'black bold';
+
+  }
+}
+
+run( \&process, real_path, @ARGV );
