@@ -1,0 +1,12 @@
+#!/usr/bin/env perl
+use App::Cope;
+
+sub process {
+  line qr{^(?:In file included from )?([^:]+:)([^:]+:)} => 'green bold', 'green';
+  line qr{^([^:]+:) (In function) (..+.):} => 'green bold', 'green', 'blue bold';
+  line qr{(error:)} => 'red bold';
+  line qr{(warning:)} => 'yellow bold';
+  line qr{(note:)} => 'yellow';
+}
+
+run( \&process, real_path, @ARGV );
