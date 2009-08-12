@@ -1,0 +1,32 @@
+#!/usr/bin/env perl
+use App::Cope;
+
+my @headers = qw[Address Kbytes Mode Offset Device RSS Anon Locked Mode Mapping];
+
+my %modes = (
+  'r' => 'yellow bold',
+  'w' => 'red bold',
+  'x' => 'green bold',
+  '-' => 'black bold',
+  's' => 'magenta bold',
+  'p' => 'cyan bold',
+);
+
+sub process {
+  if (/^Address/) {
+    for my $h (@headers) { mark $h => 'underline'; }
+  }
+  else {
+    line qr{^([0-9a-f]+)\s+(\d+)} => 'blue bold', 'blue';
+    line qr{\s([-r])([-w])([-x])([-sp])(-)\s} => ( \%modes ) x 5;
+    line qr{\s(-)(?:\s|$)} => 'black bold';
+    line qr{([0-9a-f]{16})\s(\d{3}:\d{5})} => 'yellow', 'green';
+    line qr{^
+	  mapped:\s(\S+)\s+
+	  writeable/private:\s(\S+)\s+
+	  shared:\s(\S+)
+	 }x => qw[bold] x 3;
+  }
+}
+
+run( \&process, real_path, @ARGV );
