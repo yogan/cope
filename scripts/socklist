@@ -1,0 +1,27 @@
+#!/usr/bin/env perl
+use App::Cope;
+use App::Cope::Extra qw[user nonzero];
+
+my @headers = qw[type port inode uid pid fd name];
+
+sub process {
+  if (/^type/) {
+    for my $h (@headers) {
+      mark $h => 'underline';
+    }
+  }
+
+  else {
+    line qr{^
+	     (tcp|udp|raw) \s+	# type
+	     (\d+) \s+		# port
+	     (\d+) \s+          # inode
+	     (\d+) \s+          # uid
+	     (\d+) \s+          # pid
+	     (\d+)              # fd
+	 }x => { tcp => 'magenta bold', udp => 'red bold', raw => 'red' },
+	   'green bold', 'green', \&{ user 'yellow' }, 'cyan', 'blue';
+  }
+}
+
+run( \&process, real_path, @ARGV );
