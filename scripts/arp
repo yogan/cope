@@ -1,0 +1,27 @@
+#!/usr/bin/env perl
+use App::Cope;
+
+my @headers = qw[Address HWtype HWaddress Flags Mask Iface];
+
+my $broken = 0;
+
+sub process {
+
+  return if $broken;
+
+  if ( m{^(?:Address)} ) {
+    for my $h (@headers) { mark $h => 'underline'; }
+  }
+
+  elsif ( m{^arp:} ) {
+    $broken = 1;
+  }
+
+  else {
+    line qr{Entries:\s(\d+)\s+Skipped:\s(\d+)\s+Found:\s(\d+)} => qw[bold] x 3
+      or line qr{^(\S+)\s+(\S+)\s+(\S+)\s+} => 'green bold', 'yellow bold', 'blue bold';
+  }
+
+}
+
+run( \&process, real_path, @ARGV );
