@@ -62,6 +62,28 @@ Previously, the two functions modified C<$_> throughout, but then it
 was impossible to match against an already-coloured part of the
 string, as the control codes would get in the way.
 
+=head2 Buffering
+
+The programs run are line-buffered by default - that is, cope waits
+for it to output a newline before it starts processing the
+string. This is so scripts can't receive half a line and accidentally
+treat it as a whole one, instead of matching after all the line has
+been received.
+
+The downside is that if a program pauses half-way through a line, it
+won't be displayed until the entire line has been written. Because of
+these special cases, you can turn this behaviour off by changing a
+variable:
+
+    $App::Cope::line_buffered = 0;    # or on again with 1
+
+Scripts using this feature should not rely on matching the start or
+end (C</^/> or C</$/>) on any string, as they are no longer guaranteed
+to actually be the start or end of the line on the screen. This can
+lead to some expansive miscolouring, which is why it's on by default.
+
+=cut
+
 =head1 MAIN FUNCTIONS
 
 =head2 run( \&process, @args )
@@ -74,6 +96,8 @@ should be absolute.
 =cut
 
 our %colours;   # the variable to modify
+
+our $line_buffered = 1;
 
 sub run {
   my ( $process, @args ) = @_;
@@ -106,14 +130,15 @@ sub run {
   # No suffering from buffering
   local $| = 1;
 
-  # Input is received one chunk at a time, rather than one line at a
-  # time. If the last line received isn't complete (no newline at
-  # end), wait for more to be received before processing it.
+  # Input is received one chunk at a time, when some scripts want it
+  # one line at a time. If the last line received isn't complete (no
+  # newline at the end), wait for more to be received before
+  # processing it.
  receive:
   my $buf = '';
   while ( my $rout = $pty->read ) {
     my @bits = split /(\r|\n)/, "$buf$rout";
-    if ( $bits[-1] !~ /\r|\n/ ) {
+    if ( $line_buffered and $bits[-1] !~ /\r|\n/ ) {
       $buf = pop @bits;
     } else {
       $buf = '';
