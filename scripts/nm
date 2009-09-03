@@ -1,0 +1,19 @@
+#!/usr/bin/env perl
+use App::Cope;
+
+my %types = ( U => 'yellow bold', _else => 'green bold' );
+my $value = 'cyan bold';
+
+sub process {
+
+  # BSD syntax (default)
+  line qr{^([0-9a-f]*)\s+(\w)\s} => $value, \%types
+    or
+    # SysV syntax
+    line qr{^(\S+)\s*\|([0-9a-f]+|\s+)\|\s+(\w)} => '', $value, \%types
+      or
+      # POSIX syntax
+      line qr{^(\S+)\s+(\w)\s([0-9a-f]*)} => '', \%types, $value;
+}
+
+run( \&process, real_path, @ARGV );
