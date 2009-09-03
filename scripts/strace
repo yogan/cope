@@ -1,0 +1,33 @@
+#!/usr/bin/env perl
+use App::Cope;
+$App::Cope::line_buffered = 0;  # risking it!
+
+my $opening_re = qr{^
+                    (?:(\d\d:\d\d:\d\d|\d+)(\.\d{6})?\s)? # date
+                    (?:(\[[0-9a-f]+\])\s)?                # pointer
+                 }x;
+
+my $closing_re = qr{
+                    (=) \s                   # literal
+                    (-?0x[0-9a-f]+|-?[0-9]+) # result
+                    (?:\s?[A-Z]*\s\(.+?\))?  # error code and explanation
+                    (\s<[.0-9]+>)?           # time taken
+                    $}x;
+
+sub process {
+  line qr{$opening_re(\w+)\(} =>
+    'yellow bold', 'yellow', 'cyan', 'green bold';
+
+  line qr{$closing_re} =>
+    'blue', 'blue bold', 'cyan';
+
+  line qr{(=) (\?)} => 'magenta', 'magenta bold';
+  mark qr{<unfinished \.\.\.>} => 'red bold';
+
+  # Attempt to isolate the program's stdout from strace's stdout by
+  # dimming it against the background.
+  line qr{$opening_re(write)\(1,\s"([^"]+)(?:\\n)?"\.\.\.,\s\d+(\5.*)$} =>
+    'yellow bold', 'yellow', 'cyan', 'green bold', '', 'black bold';
+}
+
+run( \&process, real_path, @ARGV );
