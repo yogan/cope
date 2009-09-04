@@ -140,7 +140,7 @@ Kills the process running and closes the pty.
 =cut
 
 sub close {
-  shift->{pty}->close or carp "Failed close: $!";
+  shift->{pty}->close;
 }
 
 1;
