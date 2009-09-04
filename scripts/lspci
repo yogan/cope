@@ -1,0 +1,9 @@
+#!/usr/bin/env perl
+use App::Cope;
+
+sub process {
+  line qr{^((?:....:)?..:..\..)\s([^:]+:|"[^"]+")} => 'cyan', 'cyan bold';
+  mark qr{\(rev \d+\)} => 'black bold';
+}
+
+run( \&process, real_path, @ARGV );
