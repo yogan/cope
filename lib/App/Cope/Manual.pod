@@ -5,11 +5,19 @@ App::Cope::Manual - User guide for cope
 =head1 DESCRIPTION
 
 B<cope> is a wrapper around programs that output to a terminal, to
-give them colour for utility (and aesthetics).
+give them colour for utility and aesthetics while still keeping them
+the same at the text level.
 
-For example, logfile output becomes much easier to read once errors
-are highlighted in red, or searching through processes could be helped
-if the running user is colour-coded.
+Adding colours on top of text makes it easy to see when something's
+amiss. For utility, you can stop hunting through your terminal's
+scroll buffer to locate an error when it's clearly highlighted in red,
+or locating a network address hidden in dense output when they're marked
+in yellow and blue (local and foreign, respectively). As for
+aesthetics, even the simplest utility can be brightened up by adding a
+dash of colour on top.
+
+cope's scripts are written in Perl, so they're as flexible (and fast)
+as Perl allows. See L<App::Cope> for more on that.
 
 =head1 INSTALL
 
@@ -24,10 +32,15 @@ cope is not currently on the CPAN, so installation is the standard
 
 - make install
 
-Once you've installed cope, just add the directory to your C<$PATH>:
+There's a standard Perl location for putting extra files. You'll have
+to ask Perl to tell you where it is, though:
 
-  OLDPATH=$PATH''
-  export PATH="/path/to/scripts/:$PATH"
+    $ perl -MFile::ShareDir=dist_dir -e "print dist_dir('Cope').\$/"
+
+Now all you need to do is add that directory to your C<$PATH>:
+
+    OLDPATH=$PATH
+    export PATH="/path/to/scripts/:$PATH"
 
 And the programs in the scripts directory will automatically colourise
 their counterparts.

@@ -1,10 +1,20 @@
 
 cope is a wrapper around programs that output to a terminal, to give
-them colour for utility (and aesthetics).
+them colour for utility and aesthetics while still keeping them the
+same at the text level.
 
-For example, logfile output becomes much easier to read once errors
-are highlighted in red, or searching through processes could be helped
-if the running user is colour-coded.
+Adding colours on top of text makes it easy to see when something's
+amiss. For utility, you can stop hunting through your terminal's
+scroll buffer to locate an error when it's clearly highlighted in red,
+or locating a network address hidden in dense output when they're
+marked in yellow and blue (local and foreign, respectively). As for
+aesthetics, even the simplest utility can be brightened up by adding a
+dash of colour on top.
+
+cope's scripts are written in Perl, so they're as flexible (and fast)
+as Perl allows.
+
+---
 
 You'll need Perl >= 5.10, and a working version of CPAN.
 
