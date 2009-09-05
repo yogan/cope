@@ -3,5 +3,5 @@ use File::Spec 'splitpath';
 
 my ( $vol, $dirs, $file ) = File::Spec->splitpath($0);
 $dirs =~ s{/$}{};
-$ENV{PATH} =~ s{^$dirs:}{};
+$ENV{PATH} = join ':', grep { $_ ne $dirs } split /:/, $ENV{PATH};
 exec @ARGV;
