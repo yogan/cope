@@ -115,22 +115,38 @@ sub spawn {
 
 =head2 read()
 
-Reads data from the process that's running on the pty.
-
-C<read> assumes that both the pty and its process have been set up
-correctly, and does no checking. Then it does a blocking read, so
-there'd better be something to read on the other end.
-
-Returns up to 4096 bytes' worth of read data. If there's any data left
-over, it will be read during the next cycle.
+Returns up to 4096 bytes' worth of read data from the process that's
+running on the pty. If there's any data left over, it will be read
+during the next cycle.
 
 =cut
 
 sub read {
   my $self = shift;
+
   my $nchars = sysread( $self->{pty}, my $buf, 4096 );
-  $buf = '' if defined $nchars && $nchars == 0;
+  return '' if defined $nchars && $nchars == 0; # eof
+
   return $buf;
+}
+
+=head2 more_to_read
+
+Runs a C<select> call on the pty, to see if it's going to produce any
+more output within a twentieth of a second.
+
+This is only really useful when not running in line-buffering mode, as
+it indicates whether the C<sysread> above returned a fragment of a
+line because there's no more output or just because it reached the
+4096-character limit.
+
+=cut
+
+sub more_to_read {
+  my $self = shift;
+
+  vec( my $vec = '', fileno $self->{pty}, 1 ) = 1;
+  return select( $vec, undef, undef, 0.05 );
 }
 
 =head2 close()

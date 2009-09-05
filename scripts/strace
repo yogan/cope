@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 use App::Cope;
-$App::Cope::line_buffered = 0;  # risking it!
+$App::Cope::line_buffered = 0;
 
 my $opening_re = qr{^
                     (?:(\d\d:\d\d:\d\d|\d+)(\.\d{6})?\s)? # date

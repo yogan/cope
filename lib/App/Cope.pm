@@ -70,19 +70,16 @@ string. This is so scripts can't receive half a line and accidentally
 treat it as a whole one, instead of matching after all the line has
 been received.
 
-The downside is that if a program pauses half-way through a line, it
-won't be displayed until the entire line has been written. Because of
-these special cases, you can turn this behaviour off by changing a
-variable:
+If your program regularly updates without a newline, you can turn this
+behaviour off:
 
     $App::Cope::line_buffered = 0;    # or on again with 1
 
-Scripts using this feature should not rely on matching the start or
-end (C</^/> or C</$/>) on any string, as they are no longer guaranteed
-to actually be the start or end of the line on the screen. This can
-lead to some expansive miscolouring, which is why it's on by default.
-
-=cut
+The side-effect of doing this is that you can no longer rely on
+substrings to be processed in the same string, even if they appear
+next to each other in the final output. In general, if there is a
+pause between successive prints, the two will be treated as different
+outputs.
 
 =head1 MAIN FUNCTIONS
 
@@ -130,15 +127,14 @@ sub run {
   # No suffering from buffering
   local $| = 1;
 
-  # Input is received one chunk at a time, when some scripts want it
-  # one line at a time. If the last line received isn't complete (no
-  # newline at the end), wait for more to be received before
-  # processing it.
+  # Any input received is stored in a buffer before processing:
+  # although scripts process their input one line at a time, sometimes
+  # the input is cut off halfway through a line.
  receive:
   my $buf = '';
   while ( my $rout = $pty->read ) {
     my @bits = split /(\r|\n)/, "$buf$rout";
-    if ( $line_buffered and $bits[-1] !~ /\r|\n/ ) {
+    if ( ($line_buffered || $pty->more_to_read) and $bits[-1] !~ /\r|\n/ ) {
       $buf = pop @bits;
     } else {
       $buf = '';
