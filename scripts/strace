@@ -15,7 +15,7 @@ my $closing_re = qr{
                     $}x;
 
 sub process {
-  line qr{$opening_re(\w+)\(} =>
+  line qr{$opening_re(?:(\w+)\(|---)} =>
     'yellow bold', 'yellow', 'cyan', 'green bold';
 
   line qr{$closing_re} =>
