@@ -29,7 +29,7 @@ use File::Spec qw[splitpath];
 
 use base q[Exporter];
 our @EXPORT = qw[run mark line real_path];
-our @EXPORT_OK = qw[get colourise];
+our @EXPORT_OK = qw[run_with get colourise];
 
 sub import {
   # Automatically use strictures and warnings and Perl 5.10 features,
@@ -85,6 +85,26 @@ outputs.
 
 =head2 run( \&process, @args )
 
+The main entry point for scripts to use - checks C<$NOCOPE> and the
+resulting terminal, and then passes control to L<run_with>.
+
+=cut
+
+sub run {
+  my ( $process, @args ) = @_;
+  croak "No arguments" unless @args;
+
+  # Don't run if told not to
+  if ( $ENV{NOCOPE} or not POSIX::isatty STDOUT ) {
+    exec @args;
+  }
+  else {
+    run_with( $process, @args );
+  }
+}
+
+=head2 run_with( \&process, @args )
+
 The main body of the program, when being run by scripts. It takes a
 sub that modifies each line of input, and a list of arguments to pass
 to exec to run the program. The first of the args, the program name,
@@ -92,18 +112,11 @@ should be absolute.
 
 =cut
 
-our %colours;   # the variable to modify
+our %colours;                   # the variable to modify
+our $line_buffered = 1;         # keep a buffer of half-lines
 
-our $line_buffered = 1;
-
-sub run {
+sub run_with {
   my ( $process, @args ) = @_;
-  croak "No arguments" unless @args;
-
-  # Don't run if told not to
-  if ($ENV{NOCOPE} or not POSIX::isatty STDOUT) {
-    exec @args;
-  }
 
   # Initialise handle
   my $fh = new IO::Handle or croak "Failed handle: $!";
@@ -189,9 +202,9 @@ sub line {
   while ( m/$regex/g ) {
 
     # skip 0th entries - they just contain info about the entire match
-    my @starts   = @-[ 1 .. $#- ];
-    my @ends     = @+[ 1 .. $#+ ];
-    my @colours  = @_;
+    my @starts  = @-[ 1 .. $#- ];
+    my @ends    = @+[ 1 .. $#+ ];
+    my @colours = @_;
 
     my $ea = each_array( @starts, @ends, @colours );
     while ( my ( $start, $end, $colour ) = $ea->() ) {
@@ -241,10 +254,18 @@ regex. Used by C<mark> and C<line>.
 sub get {
   my ( $colour, $str ) = @_;
   given ( ref $colour ) {
-    when ('ARRAY') { return get( shift @{$colour}, $str ) || ''; }
-    when ('HASH')  { return get( $colour->{$str},  $str ) || get( $colour->{_else} ) || ''; }
-    when ('CODE')  { return get( &$colour($str),   $str ) || ''; }
-    default        { return $colour; };
+    when ('ARRAY') {
+      return get( shift @{$colour}, $str ) || '';
+    }
+    when ('HASH') {
+      return get( $colour->{$str}, $str ) || get( $colour->{_else} ) || '';
+    }
+    when ('CODE') {
+      return get( &$colour($str), $str ) || '';
+    }
+    default {
+      return $colour;
+    }
   }
 }
 
