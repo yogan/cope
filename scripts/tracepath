@@ -1,0 +1,15 @@
+#!/usr/bin/env perl
+use App::Cope;
+use App::Cope::Extra qw[ping_time];
+use Regexp::Common qw[net];
+
+sub process {
+  line qr{(\S+)\s\($RE{net}{IPv4}\)} => 'blue bold';
+  line qr{(\(?$RE{net}{IPv4}\)?)}    => 'blue';
+  line qr{^\s*(\d+:)}x               => 'bold';
+  line qr{([0-9.]+ms)\b}             => \&ping_time;
+  mark qr{no reply}                  => 'red bold';
+  mark qr{reached$}                  => 'underline';
+}
+
+run( \&process, real_path, @ARGV );

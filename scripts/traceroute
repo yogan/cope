@@ -4,9 +4,9 @@ use App::Cope::Extra qw[ping_time];
 use Regexp::Common qw[net];
 
 sub process {
-  line qr{(\S+)\s(\($RE{net}{IPv4}\))} => 'blue bold', 'blue';
-  line qr{\d+ bytes to ($RE{net}{IPv4})} => 'blue';
-  line qr{^traceroute to (\S+)} => 'blue bold underline';
+  line qr{(\S+)\s\($RE{net}{IPv4}\)} => 'blue bold';
+  line qr{(\(?$RE{net}{IPv4}\)?)}    => 'blue';
+  line qr{^traceroute to (\S+)}      => 'blue bold underline';
 
   line qr{^\s*(\d+)		# trace number
 	  \s+\d			# match first digit of IP, and avoid
