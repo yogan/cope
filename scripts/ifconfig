@@ -1,0 +1,29 @@
+#!/usr/bin/env perl
+use App::Cope;
+use Regexp::Common qw[net];
+
+# things that can go wrong (green/red)
+my $things = join '|', qw[errors dropped overruns frame carrier collisions];
+
+sub process {
+  line qr{Link encap:(.+?)\s\s} => 'bold';
+  mark qr{^(\S+)} => 'bold';
+
+  # status
+  # green=good, red=bad, yellow=info
+  line qr{^\s+(UP|DOWN)} => { UP => 'green bold', DOWN => 'red bold' };
+
+  line qr{((?:$things):)(0)\b}               => 'green',  'green bold';
+  line qr{((?:$things):)([^0]\d*)\b}         => 'red',    'red bold';
+  line qr{([RT]X packets:|txqueuelen:)(\d+)} => 'yellow', 'yellow bold';
+  line qr{([RT]X bytes:)(\d+) (\([^)]+\))}   => 'yellow', 'yellow bold', 'yellow';
+
+  # addresses and such
+  line qr{HWaddr ([0-9A-F-:]+)}            => 'cyan';
+  line qr{(?:Bcast|Mask):($RE{net}{IPv4})} => 'cyan bold';
+  line qr{inet addr:($RE{net}{IPv4})}      => 'cyan bold underline';
+  line qr{inet6 addr: (\S+)}               => 'cyan';
+
+}
+
+run( \&process, real_path, @ARGV );
