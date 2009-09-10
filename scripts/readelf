@@ -1,0 +1,189 @@
+#!/usr/bin/env perl
+use App::Cope;
+use App::Cope::Extra qw[nonzero];
+use List::Util qw[first];
+
+# Because of readelf's multiple sections of output, only check a few
+# regexes depending on what the most recent heading is.
+
+my $current = '';  # the current section
+
+sub headers {
+  return unless /^\s*$_[0]/;
+  for my $h (@_) {
+    mark $h => 'underline';
+  }
+}
+
+sub pct {
+  my ($num) = @_;
+  chop $num;
+  given ($num) {
+    when ( $_ >= 67 )   { return 'green bold' }
+    when ( $_ >= 33 )   { return 'yellow bold' }
+    default             { return 'red bold' }
+  }
+}
+
+my %types = (
+  PROGBITS => 'green bold',
+  STRTAB   => 'yellow bold',
+  NOTE     => 'yellow bold',
+  DYNAMIC  => 'magenta bold',
+  NOBITS   => 'red bold',
+  NULL     => 'reset',
+  DYNSYM   => 'magenta bold',
+  SYMTAB   => 'magenta bold',
+  _else    => 'blue',
+);
+
+my %flags = (
+  W => 'red bold',
+  A => 'yellow bold',
+  X => 'green bold',
+  M => 'magenta bold',
+  S => 'blue bold',
+  I => 'magenta',
+  L => 'blue',
+  G => 'yellow',
+  O => 'red',
+  o => 'red',
+  p => 'red',
+);
+
+my %stypes = (
+  NOTYPE  => 'reset',
+  FUNC    => 'blue bold',
+  OBJECT  => 'green bold',
+  SECTION => 'blue',
+  FILE    => 'blue',
+);
+
+my %sbind = (
+  LOCAL  => 'yellow',
+  GLOBAL => 'green',
+  WEAK   => 'red',
+);
+
+my %pflags = (
+  R => 'yellow bold',
+  W => 'red bold',
+  E => 'green bold',
+);
+
+my %svis = (
+  DEFAULT => 'blue',
+  HIDDEN  => 'magenta',
+);
+
+my %formatters = (
+  'ELF Header' => sub {
+    line qr{Magic:\s+([0-9a-f\s]+)} => 'cyan bold';
+    line qr{^\s+([^:]+:)} => 'bold';
+  },
+
+  'Section Headers' => sub {
+    headers qw{\[Nr\] Name Type Addr Off Size ES Flg Lk Inf Al};
+    line qr{^\s*
+            (\[)\s*(\d+)(\]) \s  # number
+            (\S+)?\s+ (\S+) \s+  # name, type
+            (\S+) \s             # address
+            (\S+) \s             # offset
+            (\S+) \s             # size
+            (\d+) \s             # ES
+            (.)(.)(.)            # flags
+         }x => 'black bold', 'blue bold', 'black bold', 'bold', \%types,
+           ('cyan') x 3, \&{ nonzero 'green' }, ( \%flags ) x 3;
+    },
+
+  'Program Headers' => sub {
+    headers qw[Type Offset VirtAddr PhysAddr FileSiz MemSiz Flg Align];
+    line qr{^\s*
+            ([A-Z_]+) \s+       # type
+            ((?:\S+\s+){5})\s*  # various addresses
+            ([R ])([W ])([E ])  # flags
+         }x => 'bold', 'cyan', ( \%pflags ) x 3;
+  },
+
+  'Dynamic section' => sub {
+    headers qw[Tag Type Name/Value];
+    line qr{^\s*
+            (0x[0-9a-f]+) \s+   # tag
+            (\()(\S+)(\))       # parens and type
+         }x => 'cyan', 'black bold', \%types, 'black bold';
+  },
+
+  'Relocation section' => sub {
+    headers 'Offset', 'Info', 'Type', 'Sym.Value', 'Sym. Name';
+    line qr{^
+            ([0-9a-f]+) \s+     # offset
+            ([0-9a-f]+) \s+     # info
+            (\S+) \s+           # type
+            ([0-9a-f]+) \s+     # value
+            (\S+)               # name
+      }x => 'cyan', 'cyan', 'green', \&{ nonzero 'yellow' }, 'bold';
+    },
+
+  'Symbol table' => sub {
+    headers qw[Num:? Buc:? Value Size Type Bind Vis Ndx Name];
+
+    line qr{^\s*
+            (?:(\d+) \s+)?      # num?
+            (\d+:) \s           # num/buc
+            ([0-9a-f]+) \s+     # value
+            (\S+) \s+           # size
+            (\S+) \s+           # type
+            (\S+) \s+           # bind
+            (\S+) \s+           # vis
+            (\S+)               # ndx
+         }x => 'blue', 'blue bold', 'cyan', 'green', \%stypes, \%sbind, \%svis,
+           sub {
+             if (shift =~ /^\d+$/) {
+               return 'green';
+             } else {
+               return 'cyan';
+             }
+           };
+  },
+
+  'Histogram' => sub {
+    headers 'Length', 'Number', '% of total', 'Coverage';
+    line qr{^\s*
+            (\d+) \s+             # length
+            (\d+) \s+             # number
+            \(\s*([0-9.]+%)\) \s* # percentage
+            ([0-9.]+%)?           # coverage
+         }x => 'blue bold', 'green', \&pct, \&pct;
+  },
+
+  'Version symbols section' => sub {
+    line qr{^\s*Addr: ([0-9a-f]+)  Offset: (0x[0-9a-f]+)  Link: (\d+)} =>
+      'cyan', 'cyan bold', 'green bold';
+    line qr{(\S+:)} => 'blue bold'; # labels
+  },
+
+  'Version needs section' => sub {
+    line qr{^\s*Addr: (0x[0-9a-f]+)  Offset: (0x[0-9a-f]+)  Link: (\d+)} =>
+      'cyan', 'cyan bold', 'green bold';
+    line qr{(\S+:)} => 'blue bold'; # labels
+  },
+
+  'Notes' => sub {
+    headers 'Owner', 'Data size', 'Description';
+    line qr{^\s*(\S+)\s+(0x[0-9a-f]+)} => 'blue bold', 'cyan';
+  },
+);
+
+sub process {
+  if (/^[A-Z]/) {
+    my $line = $_;
+    $current = first { $line =~ /^$_/ } keys %formatters;
+    mark qr{^.+$} => 'underline' if $current;
+  }
+  elsif ($current) {
+    my $go = $formatters{$current};
+    $go->() if $go;
+  }
+}
+
+run( \&process, real_path, @ARGV );
