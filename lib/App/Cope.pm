@@ -140,16 +140,15 @@ sub run_with {
   # No suffering from buffering
   local $| = 1;
 
-  # Any input received is stored in a buffer before processing:
-  # although scripts process their input one line at a time, sometimes
-  # the input is cut off halfway through a line.
+  # Main loop: continues as long as there's input to receive
  receive:
   my $buf = '';
-  while ( my $rout = $pty->read ) {
+  while ( defined ( my $rout = $pty->read ) ) {
     my @bits = split /(\r|\n)/, "$buf$rout";
-    if ( ($line_buffered || $pty->more_to_read) and $bits[-1] !~ /\r|\n/ ) {
+    if ( ( $line_buffered || $pty->more_to_read ) and $bits[-1] !~ /\r|\n/ ) {
       $buf = pop @bits;
-    } else {
+    }
+    else {
       $buf = '';
     }
     print colourise( $process, $_ ) for @bits;
@@ -178,7 +177,7 @@ given colour.
 
 sub mark {
   my ( $regex, $colour ) = @_;
-  if (m/$regex/p) {
+  if ( m/$regex/p ) {
     colour( $-[0], $+[0] => get( $colour, ${^MATCH} ) );
     return 1;
   }
@@ -293,8 +292,7 @@ printed to stdout.
 my $last = '';
 
 sub colourise {
-  my $process = shift;
-  $_ = shift;
+  ( my $process, local $_ ) = @_;
   return $_ if $_ eq "\n";
 
   %colours = ();

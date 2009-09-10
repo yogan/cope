@@ -125,7 +125,8 @@ sub read {
   my $self = shift;
 
   my $nchars = sysread( $self->{pty}, my $buf, 4096 );
-  return '' if defined $nchars && $nchars == 0; # eof
+  return undef if defined $nchars and $nchars == 0;  # eof
+  return undef if $buf eq '';  # nothing to read
 
   return $buf;
 }
