@@ -334,7 +334,11 @@ the one not in the scripts directory.
 
 sub real_path {
   my ( $vol, $dirs, $file ) = File::Spec->splitpath($0);
-  return firstval { $_ ne $0 } PATH->Whence($file);
+
+  my $path = firstval { $_ ne $0 } PATH->Whence($file)
+    or croak "Executable not found in \$PATH";
+
+  return $path;
 }
 
 1;
