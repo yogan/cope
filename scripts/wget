@@ -1,0 +1,82 @@
+#!/usr/bin/env perl
+use App::Cope;
+use Regexp::Common qw[net];
+$App::Cope::line_buffered = 0;
+
+my %codes = (
+  # 100s: Information
+  "100 Continue"                        => 'yellow',
+  "101 Switching Protocols"             => 'yellow',
+  "102 Processing"                      => 'yellow',
+  # 200s: Success
+  "200 OK"                              => 'green bold',
+  "201 Created"                         => 'green bold',
+  "202 Accepted"                        => 'green bold',
+  "203 Non-Authoritative Information"   => 'green bold',
+  "204 No Content"                      => 'green bold',
+  "205 Reset Content"                   => 'green bold',
+  "206 Partial Content"                 => 'green bold',
+  "207 Multi-Status"                    => 'green bold',
+  # 300s: Redirection
+  "300 Multiple Choices"                => 'yellow bold',
+  "301 Moved Permanently"               => 'yellow bold',
+  "302 Found"                           => 'yellow bold',
+  "303 See Other"                       => 'yellow bold',
+  "304 Not Modified"                    => 'yellow bold',
+  "305 Use Proxy"                       => 'yellow bold',
+  "306 Switch Proxy"                    => 'yellow bold',
+  "307 Temporary Redirect"              => 'yellow bold',
+  # 400s: Client Error
+  "400 Bad Request"                     => 'red bold',
+  "401 Authorization Required"          => 'red bold',
+  "402 Payment Required"                => 'red bold',
+  "403 Forbidden"                       => 'red bold',
+  "404 Not Found"                       => 'red bold',
+  "405 Method Not Allowed"              => 'red bold',
+  "406 Not Acceptable"                  => 'red bold',
+  "407 Proxy Authentication Required"   => 'red bold',
+  "408 Request Timeout"                 => 'red bold',
+  "409 Conflict"                        => 'red bold',
+  "410 Gone"                            => 'red bold',
+  "411 Length Required"                 => 'red bold',
+  "412 Precondition Failed"             => 'red bold',
+  "413 Request Entity Too Large"        => 'red bold',
+  "414 Request-URI Too Long"            => 'red bold',
+  "415 Unsupported Media Type"          => 'red bold',
+  "416 Requested Range Not Satisfiable" => 'red bold',
+  "417 Expectation Failed"              => 'red bold',
+  "418 I'm a teapot"                    => 'magenta bold',
+  "422 Unprocessable Entity"            => 'red bold',
+  "423 Locked"                          => 'red bold',
+  "424 Failed Dependency"               => 'red bold',
+  "425 Unordered Collection"            => 'red bold',
+  "426 Upgrade Required"                => 'red bold',
+  "449 Retry With"                      => 'red bold',
+  # 500s: Server Error
+  "500 Internal Server Error"           => 'red bold',
+  "501 Not Implemented"                 => 'red bold',
+  "502 Bad Gateway"                     => 'red bold',
+  "503 Service Unavailable"             => 'red bold',
+  "504 Gateway Timeout"                 => 'red bold',
+  "505 HTTP Version Not Supported"      => 'red bold',
+  "506 Variant Also Negotiates"         => 'red bold',
+  "507 Insufficient Storage"            => 'red bold',
+  "509 Bandwidth Limit Exceeded"        => 'red bold',
+  "510 Not Extended"                    => 'red bold',
+);
+
+sub process {
+  # resolving
+  line qr{^Resolving (.+)\.\.\. ($RE{net}{IPv4})} => 'blue bold', 'blue';
+  line qr{^Connecting to ([^|]+)(\|$RE{net}{IPv4}\|?)(:\d+)?} => 'blue bold', 'blue', 'cyan bold';
+  line qr{^Reusing existing connection to ([^:]+)(:\d+)} => 'blue bold', 'cyan bold';
+  line qr{^(failed:)} => 'red bold';
+
+  # downloading
+  line qr{(\d{3}\s.+)} => \%codes;
+
+  # time
+  mark qr{--\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}(?:--)?} => 'yellow bold';
+}
+
+run( \&process, real_path, @ARGV );
