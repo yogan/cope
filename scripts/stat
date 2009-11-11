@@ -1,0 +1,17 @@
+#!/usr/bin/env perl
+use App::Cope;
+use App::Cope::Extra qw[user %permissions %filetypes];
+
+sub process {
+  line qr{((?:IO )?[A-Za-z]+:)} => {
+    'File:' => 'blue bold underline',
+    _else   => 'blue bold'
+  };
+
+  line qr{Access: \(\d+/(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)\)} =>
+    \%filetypes, ( \%permissions ) x 9;
+
+  line qr{Uid: \(\s*(\d+)/\s*(\w+)} => ( \&{ user 'yellow' } ) x 2;
+}
+
+run( \&process, real_path, @ARGV );

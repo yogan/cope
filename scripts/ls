@@ -1,33 +1,6 @@
 #!/usr/bin/env perl
 use App::Cope;
-use App::Cope::Extra qw[user];
-
-my %types = (
-  'b' => 'magenta',    # block special
-  'c' => 'magenta',    # character special
-  'C' => 'red',        # contiguous data
-  'd' => 'blue',       # directory
-  'D' => 'red',        # door
-  'l' => 'cyan',       # symlink
-  'M' => 'red',        # offline file
-  'n' => 'red',        # network special
-  'p' => 'yellow',     # named pipe
-  'P' => 'red',        # port
-  's' => 'yellow',     # socket
-);
-
-my $ts = join '', keys %types;
-
-my %permissions = (
-  'r' => 'yellow bold',
-  'w' => 'red bold',
-  'x' => 'green bold',
-  '-' => 'black bold',
-  's' => 'magenta bold',
-  'S' => 'magenta',
-  't' => 'green',
-  'T' => 'green bold',
-);
+use App::Cope::Extra qw[user %permissions %filetypes];
 
 my $date_re = qr{
                   (?:\d{4}-)?     # year
@@ -57,8 +30,9 @@ sub process {
   }
 
   if ($highlighting) {
+    my $ts = join '', keys %filetypes;
     line qr{([-$ts])(.)(.)(.)(.)(.)(.)(.)(.)(.)\s+(\d+)\s+(\S+)\s*(\S*)\s+([0-9.]+)([KMG]?)\s} =>
-      \%types, ( \%permissions ) x 9, 'red',
+      \%filetypes, ( \%permissions ) x 9, 'red',
       \&{ user 'yellow' }, 'yellow', \&size, 'green';
 
     mark $date_re => 'green';

@@ -27,7 +27,47 @@ No functions are exported by default.
 =cut
 
 use base q[Exporter];
-our @EXPORT_OK = qw[user nonzero ping_time];
+our @EXPORT_OK = qw[ %permissions %filetypes
+                     user nonzero ping_time ];
+
+=head1 VARIABLES
+
+=head2 %permissions
+
+Describes the single-character UNIX permissions;
+
+=cut
+
+our %permissions = (
+  'r' => 'yellow bold',
+  'w' => 'red bold',
+  'x' => 'green bold',
+  '-' => 'black bold',
+  's' => 'magenta bold',
+  'S' => 'magenta',
+  't' => 'green',
+  'T' => 'green bold',
+);
+
+=head2 %filetypes
+
+Describes the single-character file type descriptions.
+
+=cut
+
+our %filetypes = (
+  'b' => 'magenta',    # block special
+  'c' => 'magenta',    # character special
+  'C' => 'red',        # contiguous data
+  'd' => 'blue',       # directory
+  'D' => 'red',        # door
+  'l' => 'cyan',       # symlink
+  'M' => 'red',        # offline file
+  'n' => 'red',        # network special
+  'p' => 'yellow',     # named pipe
+  'P' => 'red',        # port
+  's' => 'yellow',     # socket
+);
 
 =head1 FUNCTIONS
 
