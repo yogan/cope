@@ -1,0 +1,33 @@
+#!/usr/bin/env perl
+use App::Cope;
+
+# md5sum and its ilk output hashes. cache the hashes and highlight in
+# bold if any of them matches another one.
+
+my @colours = qw[green blue red yellow cyan magenta];
+my %hashes;
+my $i = 0;
+
+sub process {
+  if (/^([0-9a-f]{40})\s/) {
+    if ( $1 eq "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b" ) { # sha384sum("")
+      return;  # ignore empty files
+    }
+    elsif ( $hashes{$1} ) {
+      mark qr{^\S+} => "bold " . $hashes{$1};
+    }
+    else {
+      $hashes{$1} = $colours[ $i++ % 6 ];
+      mark qr{^\S+} => $hashes{$1};
+    }
+  }
+
+  # checking output
+  else {
+    line qr{: (OK|FAILED)$} => { OK => 'green bold', FAILED => 'red bold' };
+    line qr{sha384sum: (WARNING:) (\d+) (.+)} => 'white on_red', 'red bold', 'red';
+  }
+
+}
+
+run( \&process, real_path, @ARGV );
