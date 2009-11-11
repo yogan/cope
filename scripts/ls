@@ -1,0 +1,68 @@
+#!/usr/bin/env perl
+use App::Cope;
+use App::Cope::Extra qw[user];
+
+my %types = (
+  'b' => 'magenta',    # block special
+  'c' => 'magenta',    # character special
+  'C' => 'red',        # contiguous data
+  'd' => 'blue',       # directory
+  'D' => 'red',        # door
+  'l' => 'cyan',       # symlink
+  'M' => 'red',        # offline file
+  'n' => 'red',        # network special
+  'p' => 'yellow',     # named pipe
+  'P' => 'red',        # port
+  's' => 'yellow',     # socket
+);
+
+my $ts = join '', keys %types;
+
+my %permissions = (
+  'r' => 'yellow bold',
+  'w' => 'red bold',
+  'x' => 'green bold',
+  '-' => 'black bold',
+  's' => 'magenta bold',
+  'S' => 'magenta',
+  't' => 'green',
+  'T' => 'green bold',
+);
+
+my $date_re = qr{
+                  (?:\d{4}-)?     # year
+                  \d{2} - \d{2}   # month-day
+                  \s \d{2}:\d{2}  # hour-minute
+                  (?::\d{2}.\d+\s # iso time thing
+                    \+\d{4})?
+                  \b              # end on a boundary
+              }x;
+
+sub size {
+  # only files have actual file sizes
+  if ( /^-/ ) {
+    return 'green bold';
+  } else {
+    return 'green';
+  }
+}
+
+my $highlighting = 0;
+
+sub process {
+  # Check whether we have to highlight at all
+  if (/^total \d/) {
+    $highlighting = 1;
+    mark qr{^.+} => 'underline';
+  }
+
+  if ($highlighting) {
+    line qr{([-$ts])(.)(.)(.)(.)(.)(.)(.)(.)(.)\s+(\d+)\s+(\S+)\s*(\S*)\s+([0-9.]+)([KMG]?)\s} =>
+      \%types, ( \%permissions ) x 9, 'red',
+      \&{ user 'yellow' }, 'yellow', \&size, 'green';
+
+    mark $date_re => 'green';
+  }
+}
+
+run( \&process, real_path(), @ARGV );
