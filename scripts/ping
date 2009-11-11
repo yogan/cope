@@ -19,10 +19,10 @@ sub process {
   line qr{^PING (\S+)} => 'blue bold underline';
 
   # ping replies
-  line qr{time=([0-9.]+ ms)\b}       => \&ping_time;
-  line qr{(?:icmp_seq|ttl)=(\d+)}    => 'bold';
+  line qr{time=([0-9.]+ ms)\b}    => \&ping_time;
+  mark qr{\($RE{net}{IPv4}\)}     => 'blue';
+  line qr{(?:icmp_seq|ttl)=(\d+)} => 'bold';
   line qr{^(?:\d+ bytes )?[Ff]rom ([^:\s]+)} => 'blue bold';
-  mark qr{\($RE{net}{IPv4}\)}        => 'blue';
 
   # final ping statistics
   line qr{(\d+% packet loss)} => \&pct;
