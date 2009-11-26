@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 use App::Cope;
+use App::Cope::Extra qw[percent_b];
 
 my @headers = (
   'Filesystem', '1K-blocks', 'Used', qr/Avail(?:able)?/, 'Use%', 'Mounted on',
@@ -9,23 +10,12 @@ my @headers = (
 
 my $system_fs = join '|', qw[none tmpfs udev proc devpts sysfs procbususb rpc_pipefs];
 
-sub pct {
-  my ($num) = @_;
-  chop $num;
-  given ($num) {
-    when ( $_ > 75 ) { return 'red bold' }
-    when ( $_ > 50 ) { return 'yellow bold' }
-    when ( $_ > 25 ) { return 'green bold' }
-    default          { return 'bold' };
-  }
-}
-
 sub process {
   if (/^Filesystem/) {
     for my $h (@headers) { mark $h => 'underline'; }
   }
   else {
-    line qr{(\d+%)\s+(\S+)$} => \&pct, 'bold';
+    line qr{(\d+%)\s+(\S+)$} => \&{ percent_b 25, 50, 75 }, 'bold';
 
     # filesystems
     mark qr{^(?:$system_fs)\b} => 'magenta'

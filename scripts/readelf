@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 use App::Cope;
-use App::Cope::Extra qw[nonzero];
+use App::Cope::Extra qw[percent nonzero];
 use List::Util qw[first];
 
 # Because of readelf's multiple sections of output, only check a few
@@ -15,15 +15,7 @@ sub headers {
   }
 }
 
-sub pct {
-  my ($num) = @_;
-  chop $num;
-  given ($num) {
-    when ( $_ >= 67 )   { return 'green bold' }
-    when ( $_ >= 33 )   { return 'yellow bold' }
-    default             { return 'red bold' }
-  }
-}
+my $pct = percent 33, 67, 101;
 
 my %types = (
   PROGBITS => 'green bold',
@@ -153,7 +145,7 @@ my %formatters = (
             (\d+) \s+             # number
             \(\s*([0-9.]+%)\) \s* # percentage
             ([0-9.]+%)?           # coverage
-         }x => 'blue bold', 'green', \&pct, \&pct;
+         }x => 'blue bold', 'green', $pct, $pct;
   },
 
   'Version symbols section' => sub {

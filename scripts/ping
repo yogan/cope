@@ -1,17 +1,7 @@
 #!/usr/bin/env perl
 use App::Cope;
-use App::Cope::Extra qw[ping_time];
+use App::Cope::Extra qw[ping_time percent_b];
 use Regexp::Common qw[net];
-
-sub pct {
-  my ($num) = @_;
-  $num =~ s/^(\d+).+/$1/;	# extract number
-  given ($num) {
-    when ( $_ > 25 ) { return 'red bold' }
-    when ( $_ > 0  ) { return 'yellow bold' }
-    when ( $_ == 0 ) { return 'green bold' }
-  }
-}
 
 sub process {
 
@@ -25,7 +15,7 @@ sub process {
   line qr{^(?:\d+ bytes )?[Ff]rom ([^:\s]+)} => 'blue bold';
 
   # final ping statistics
-  line qr{(\d+% packet loss)} => \&pct;
+  line qr{(\d+% packet loss)} => \&{ percent_b 0, 1, 26 };
   line qr{min/avg/(?:max/mdev|ewma/max)\s=\s
 	  ([0-9.]+)/    # minimum
 	  ([0-9.]+)/    # average

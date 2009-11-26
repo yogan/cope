@@ -28,7 +28,8 @@ No functions are exported by default.
 
 use base q[Exporter];
 our @EXPORT_OK = qw[ %permissions %filetypes
-                     user nonzero ping_time ];
+                     user nonzero ping_time
+                     percent percent_b ];
 
 =head1 VARIABLES
 
@@ -82,7 +83,7 @@ sub nonzero {
   my $colour = shift;
   return sub {
     my $val = shift;
-    ( $val !~ /^0(\.0)?$/ ) ? "$colour bold" : "$colour";
+    ( $val !~ /^0+(\.0+)?$/ ) ? "$colour bold" : "$colour";
   };
 }
 
@@ -100,6 +101,48 @@ sub user {
   return sub {
     my $uid = shift;
     ( $uid eq $me || $uid eq $< ) ? "$colour bold" : "$colour";
+  };
+}
+
+=head2 percent( $lower, $middle, $upper )
+
+Returns a colour based on the percentage, going from red, to yellow,
+to green, to bold. Low values are made red.
+
+=cut
+
+sub percent {
+  my ( $lower, $middle, $upper ) = @_;
+  return sub {
+    my $pct = shift;
+    $pct =~ s/^(\d+).+/$1/;	# extract number
+    given ($pct) {
+      when ( $_ >= $upper  ) { return 'bold' }
+      when ( $_ >= $middle ) { return 'green bold' }
+      when ( $_ >= $lower  ) { return 'yellow bold' }
+      default                { return 'red bold' }
+    }
+  };
+}
+
+=head2 percent_b( $lower, $middle, $upper )
+
+Returns a colour based on the percentage, going from bold, to green,
+to yellow, to red. High values are made red.
+
+=cut
+
+sub percent_b {
+  my ( $lower, $middle, $upper ) = @_;
+  return sub {
+    my $pct = shift;
+    $pct =~ s/^(\d+).+/$1/;	# extract number
+    given ($pct) {
+      when ( $_ >= $upper  ) { return 'red bold' }
+      when ( $_ >= $middle ) { return 'yellow bold' }
+      when ( $_ >= $lower  ) { return 'green bold' }
+      default                { return 'bold' }
+    }
   };
 }
 
