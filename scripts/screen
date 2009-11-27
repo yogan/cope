@@ -1,0 +1,21 @@
+#!/usr/bin/env perl
+use App::Cope;
+
+# if we aren't just listing screens, run the program as usual.
+if ($ARGV[0] !~ /-li?st?/) {
+  exec real_path, @ARGV;
+}
+
+my %states = (
+  Detached    => 'red bold',
+  Attached    => 'green bold',
+  Unreachable => 'magenta bold'
+);
+
+sub process {
+  mark qr{^Your inventory:|There are screens on:$} => 'underline';
+  line qr{^\s*(\S+?\.)(\S+)\s\((\w+?)\)} => 'yellow', 'yellow bold', \%states;
+
+}
+
+run( \&process, real_path, @ARGV );
