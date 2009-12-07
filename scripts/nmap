@@ -34,6 +34,8 @@ sub process {
     # results
     line qr{^(\d+)(/(?:tcp|udp))\s+(\w+)\s+(\S+)} => 'blue bold', \%protocols, \%states, 'yellow';
     line qr{^Failed to resolve given hostname/IP: (\S+)\.\s} => 'red bold';
+    line qr{Host ($RE{net}{IPv4}) (?:is|appears to be) (up|down)} => 'blue bold', { up => 'green bold', down => 'red bold' };
+    line qr{Host (\S+) (\($RE{net}{IPv4}\)) (?:is|appears to be) (up|down)} => 'blue bold', 'blue', { up => 'green bold', down => 'red bold' };
 
   }
 }
