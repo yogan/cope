@@ -20,13 +20,13 @@ You'll need Perl >= 5.10, and a working version of CPAN.
 
 Installation is the standard procedure:
 
-- perl Makefile.PL
-- make
-- make test
-- sudo make install
+$ perl Makefile.PL
+$ make
+$ make test
+$ sudo make install
 
 Then, find out where perl put the scripts:
 
-$ perl -MFile::ShareDir=dist_dir -e "print dist_dir('Cope').\$/"
+$ perl cope_path.pl
 
 And add that to your $PATH.
