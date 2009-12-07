@@ -128,12 +128,12 @@ sub run_with {
   $pty->spawn( @args );
 
   # Let any signals be automatically passed to the child process
-  my %signals = ( INT => 2, QUIT => 3, TERM => 15 );
+  my @signals = qw[INT QUIT TERM];
   my $dying_early = 0;
-  while ( my ( $sig, $num ) = each %signals ) {
+  for my $sig (@signals) {
     $SIG{$sig} = sub {
       $dying_early++;
-      kill -$num => $pty->{pid}; # kill the entire process group
+      kill $sig => -$pty->{pid}; # kill the entire process group
     };
   }
 
