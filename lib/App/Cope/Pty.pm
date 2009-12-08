@@ -70,7 +70,7 @@ sub spawn {
     # disassociate from the terminal
     POSIX::setsid or carp "Failed setsid: $!";
     my $tty = $self->{pty}->slave;
-    $tty->clone_winsize_from( \*STDIN );
+    $tty->clone_winsize_from( \*STDIN ) if POSIX::isatty STDIN;
 
     # set stdin to raw, so keypresses get passed straight through
     IO::Stty::stty( $tty, 'raw', '-echo' );
