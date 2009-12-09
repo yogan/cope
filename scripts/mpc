@@ -1,0 +1,28 @@
+#!/usr/bin/env perl
+use App::Cope;
+use App::Cope::Extra qw[percent_b];
+
+my @flags  = qw[volume repeat random single consume];
+
+my $states = join '|', qw[playing paused];
+
+sub process {
+    if (/^volume: /) {
+        line qr{: (\d+%)} => \&{ percent_b 25, 50, 75 }, 'bold';
+        for my $f (@flags) { mark $f => 'underline'; }
+        line qr{: (on)}  => 'green bold';
+        line qr{: (off)} => 'red bold';
+    }
+    elsif (/^\[($states)\]/) {
+        line qr{^(\[)($states)(\])\s+(#)(\d+)(/\d+)\s+(.*)(/)(.*) (\()(\d+%)(\))$}
+            => 'blue', 'green bold', 'blue',
+               'blue', 'blue bold', 'blue',
+               'green bold', 'blue', 'green',
+               'blue', 'green', 'blue',
+    }
+    else {
+        line qr{^(.*)$}, 'bold';
+    }
+}
+
+run( \&process, real_path, @ARGV );
