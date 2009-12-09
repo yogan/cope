@@ -23,10 +23,16 @@ sub size {
 my $highlighting = 0;
 
 sub process {
+
   # Check whether we have to highlight at all
   if (/^total \d/) {
     $highlighting = 1;
     mark qr{^.+} => 'underline';
+  }
+
+  # No highlighting when using the -s switch, though
+  if (/^\s*\d/) {
+    $highlighting = 0;
   }
 
   if ($highlighting) {
