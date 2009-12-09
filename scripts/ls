@@ -31,7 +31,7 @@ sub process {
 
   if ($highlighting) {
     my $ts = join '', keys %filetypes;
-    line qr{([-$ts])(.)(.)(.)(.)(.)(.)(.)(.)(.)[ .+]?\s+(\d+)\s+(\S+)\s*(\S*)\s+([0-9.]+)([KMG]?)\s} =>
+    line qr{([-$ts])(.)(.)(.)(.)(.)(.)(.)(.)(.)[ .+]?\s+(\d+)\s+(\S+)\s*(\S*)\s+([0-9,.]+)([KMG]?)\s} =>
       \%filetypes, ( \%permissions ) x 9, 'red',
       \&{ user 'yellow' }, 'yellow', \&size, 'green';
 
